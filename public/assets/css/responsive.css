@@ -1,0 +1,553 @@
+/**
+ * Bytebalok - Standardized Responsive Styles
+ * Consistent breakpoints across all pages
+ * 
+ * Breakpoints:
+ * - 1200px: Large devices (desktop)
+ * - 1024px: Medium devices (tablets landscape)
+ * - 768px:  Small devices (tablets portrait, mobile landscape)
+ * - 480px:  Extra small devices (mobile portrait)
+ */
+
+/* ========================================
+   LARGE DEVICES - Desktop (< 1200px)
+   ======================================== */
+@media (max-width: 1200px) {
+    .container-xl {
+        max-width: 1140px;
+    }
+    
+    .grid-cols-4 {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* ========================================
+   MEDIUM DEVICES - Tablets Landscape (< 1024px)
+   ======================================== */
+@media (max-width: 1024px) {
+    /* Sidebar behavior */
+    .sidebar {
+        transform: translateX(-100%);
+        position: fixed;
+        z-index: 1000;
+        transition: transform 0.3s ease;
+    }
+    
+    .sidebar.open {
+        transform: translateX(0);
+        box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
+    }
+    
+    /* Main content adjustments */
+    .main-content {
+        margin-left: 0 !important;
+        width: 100%;
+    }
+    
+    /* Grid adjustments */
+    .grid-cols-4 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .grid-cols-3 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    /* Container */
+    .container-lg {
+        max-width: 960px;
+    }
+    
+    /* Stats grid */
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    /* Help page adjustments */
+    .help-categories {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* ========================================
+   SMALL DEVICES - Tablets & Mobile Landscape (< 768px)
+   ======================================== */
+@media (max-width: 768px) {
+    /* Typography */
+    html {
+        font-size: 14px;
+    }
+    
+    /* Spacing */
+    .content {
+        padding: 1rem !important;
+    }
+    
+    /* Header */
+    .main-header {
+        padding: 1rem;
+        flex-wrap: wrap;
+    }
+    
+    .header-title {
+        font-size: 1.25rem;
+    }
+    
+    /* Grids - all to single column */
+    .stats-grid,
+    .grid-cols-2,
+    .grid-cols-3,
+    .grid-cols-4 {
+        grid-template-columns: 1fr !important;
+    }
+    
+    /* Cards */
+    .card {
+        padding: 1rem;
+    }
+    
+    /* Tables */
+    .table-responsive {
+        overflow-x: auto;
+    }
+    
+    /* Forms */
+    .form-row {
+        flex-direction: column;
+    }
+    
+    .form-row .form-group {
+        width: 100%;
+    }
+    
+    /* Buttons */
+    .btn-group {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .btn-group .btn {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+    
+    /* Modals */
+    .modal-content {
+        width: 95%;
+        max-width: 95%;
+        margin: 1rem;
+    }
+    
+    /* User menu */
+    .user-info-compact {
+        display: none;
+    }
+    
+    .user-menu-dropdown {
+        right: -12px;
+        min-width: 260px;
+    }
+    
+    /* Container */
+    .container-md {
+        max-width: 720px;
+    }
+    
+    /* Help page */
+    .help-hero {
+        padding: 32px 24px;
+    }
+    
+    .help-hero h1 {
+        font-size: 28px;
+    }
+    
+    .help-hero p {
+        font-size: 16px;
+    }
+    
+    .help-categories,
+    .quick-links,
+    .video-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .faq-section {
+        padding: 24px;
+    }
+    
+    .contact-section {
+        padding: 32px 24px;
+    }
+    
+    .contact-buttons {
+        flex-direction: column;
+    }
+    
+    .contact-btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .shortcuts-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    /* POS specific */
+    .pos-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .pos-products {
+        order: 2;
+    }
+    
+    .pos-cart {
+        order: 1;
+    }
+}
+
+/* ========================================
+   EXTRA SMALL DEVICES - Mobile Portrait (< 480px)
+   ======================================== */
+@media (max-width: 480px) {
+    /* Typography */
+    html {
+        font-size: 13px;
+    }
+    
+    h1 {
+        font-size: 1.75rem;
+    }
+    
+    h2 {
+        font-size: 1.5rem;
+    }
+    
+    h3 {
+        font-size: 1.25rem;
+    }
+    
+    /* Spacing */
+    .content {
+        padding: 0.75rem !important;
+    }
+    
+    /* Login page */
+    .login-container {
+        padding: 1rem;
+    }
+    
+    .login-card {
+        padding: 1.5rem 1rem;
+    }
+    
+    .logo h1 {
+        font-size: 1.5rem;
+    }
+    
+    /* Cards */
+    .card {
+        padding: 0.75rem;
+        border-radius: 8px;
+    }
+    
+    /* Stats cards */
+    .stat-card {
+        padding: 1rem;
+    }
+    
+    .stat-value {
+        font-size: 1.5rem;
+    }
+    
+    /* Buttons */
+    .btn {
+        padding: 0.5rem 1rem;
+        font-size: 0.875rem;
+    }
+    
+    .btn-lg {
+        padding: 0.75rem 1.5rem;
+    }
+    
+    .btn-sm {
+        padding: 0.375rem 0.75rem;
+        font-size: 0.75rem;
+    }
+    
+    /* Tables */
+    .table {
+        font-size: 0.875rem;
+    }
+    
+    .table td,
+    .table th {
+        padding: 0.5rem;
+    }
+    
+    /* Forms */
+    .form-group {
+        margin-bottom: 0.75rem;
+    }
+    
+    .form-control {
+        padding: 0.5rem;
+        font-size: 0.875rem;
+    }
+    
+    /* Modals */
+    .modal-header {
+        padding: 1rem;
+    }
+    
+    .modal-body {
+        padding: 1rem;
+    }
+    
+    .modal-footer {
+        padding: 1rem;
+    }
+    
+    /* Help page */
+    .help-hero h1 {
+        font-size: 24px;
+    }
+    
+    .help-hero p {
+        font-size: 14px;
+    }
+    
+    .help-category-card .icon {
+        width: 60px;
+        height: 60px;
+        font-size: 28px;
+    }
+    
+    .help-category-card h3 {
+        font-size: 18px;
+    }
+    
+    .faq-section h2 {
+        font-size: 22px;
+    }
+    
+    .faq-question {
+        padding: 16px;
+        font-size: 14px;
+    }
+    
+    .faq-answer {
+        font-size: 13px;
+    }
+    
+    /* POS specific */
+    .pos-header {
+        padding: 0.75rem;
+    }
+    
+    .product-card {
+        min-height: 120px;
+    }
+    
+    .cart-item {
+        padding: 0.75rem;
+    }
+}
+
+/* ========================================
+   LANDSCAPE ORIENTATION (Mobile/Tablet)
+   ======================================== */
+@media (max-height: 600px) and (orientation: landscape) {
+    /* Reduce vertical spacing */
+    .content {
+        padding: 0.5rem !important;
+    }
+    
+    .card {
+        padding: 0.75rem;
+    }
+    
+    .stat-card {
+        padding: 0.75rem;
+    }
+    
+    /* Compact headers */
+    .main-header {
+        padding: 0.5rem 1rem;
+    }
+    
+    .page-header {
+        margin-bottom: 1rem;
+    }
+    
+    /* Modal adjustments */
+    .modal-content {
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+}
+
+/* ========================================
+   PRINT STYLES
+   ======================================== */
+@media print {
+    /* Hide navigation and UI elements */
+    .sidebar,
+    .main-header,
+    .btn,
+    .alert,
+    .modal,
+    .user-menu,
+    .notification-badge {
+        display: none !important;
+    }
+    
+    /* Full width content */
+    .main-content {
+        margin-left: 0 !important;
+        width: 100% !important;
+    }
+    
+    .content {
+        padding: 0 !important;
+    }
+    
+    /* Receipt styles */
+    body {
+        background: white !important;
+    }
+    
+    .receipt {
+        max-width: 100%;
+        box-shadow: none !important;
+    }
+    
+    /* Optimize for print */
+    * {
+        background: transparent !important;
+        color: black !important;
+        box-shadow: none !important;
+        text-shadow: none !important;
+    }
+    
+    a,
+    a:visited {
+        text-decoration: underline;
+    }
+    
+    /* Page breaks */
+    .page-break {
+        page-break-after: always;
+    }
+    
+    thead {
+        display: table-header-group;
+    }
+    
+    tr,
+    img {
+        page-break-inside: avoid;
+    }
+}
+
+/* ========================================
+   ACCESSIBILITY ENHANCEMENTS
+   ======================================== */
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+    :root {
+        --primary-color: #0000ff;
+        --text-color: #000000;
+        --bg-color: #ffffff;
+    }
+    
+    .btn {
+        border: 2px solid currentColor;
+    }
+}
+
+/* Reduced motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+/* Dark mode preference (future feature) */
+@media (prefers-color-scheme: dark) {
+    /* Add dark mode styles here when implementing */
+}
+
+/* ========================================
+   UTILITY CLASSES FOR RESPONSIVE
+   ======================================== */
+
+/* Display utilities */
+.hide-on-mobile {
+    display: block;
+}
+
+.show-on-mobile {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .hide-on-mobile {
+        display: none !important;
+    }
+    
+    .show-on-mobile {
+        display: block !important;
+    }
+}
+
+/* Text alignment responsive */
+.text-center-mobile {
+    text-align: left;
+}
+
+@media (max-width: 768px) {
+    .text-center-mobile {
+        text-align: center;
+    }
+}
+
+/* Container sizes */
+.container-fluid {
+    width: 100%;
+    padding-right: 1rem;
+    padding-left: 1rem;
+    margin-right: auto;
+    margin-left: auto;
+}
+
+@media (min-width: 481px) {
+    .container {
+        max-width: 540px;
+    }
+}
+
+@media (min-width: 769px) {
+    .container {
+        max-width: 720px;
+    }
+}
+
+@media (min-width: 1025px) {
+    .container {
+        max-width: 960px;
+    }
+}
+
+@media (min-width: 1201px) {
+    .container {
+        max-width: 1140px;
+    }
+}
+

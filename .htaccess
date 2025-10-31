@@ -1,0 +1,47 @@
+# Bytebalok Dashboard Security Configuration
+
+# Disable directory browsing
+Options -Indexes
+
+# Protect sensitive files
+<FilesMatch "^(config\.env|\.env|composer\.json|composer\.lock|\.git.*|\.htaccess)$">
+    Require all denied
+</FilesMatch>
+
+# Protect SQL files
+<FilesMatch "\.(sql|sql\.gz|backup)$">
+    Require all denied
+</FilesMatch>
+
+# Protect app directory
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^app/ - [F,L]
+    RewriteRule ^storage/(logs|cache|sessions|backups)/ - [F,L]
+</IfModule>
+
+# Security Headers
+<IfModule mod_headers.c>
+    # Prevent MIME type sniffing
+    Header set X-Content-Type-Options "nosniff"
+    
+    # Enable XSS Protection
+    Header set X-XSS-Protection "1; mode=block"
+    
+    # Clickjacking Protection
+    Header set X-Frame-Options "SAMEORIGIN"
+    
+    # Remove server information
+    Header unset Server
+    Header unset X-Powered-By
+    
+    # HSTS (only enable in production with SSL)
+    # Header set Strict-Transport-Security "max-age=31536000; includeSubDomains" env=HTTPS
+</IfModule>
+
+# PHP Security Settings
+<IfModule mod_php.c>
+    php_flag display_errors Off
+    php_flag log_errors On
+    php_value error_log storage/logs/php_errors.log
+</IfModule>

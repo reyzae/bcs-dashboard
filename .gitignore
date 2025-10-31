@@ -1,0 +1,82 @@
+# Bytebalok Dashboard - Git Ignore File
+
+# Dependencies
+/vendor/
+node_modules/
+
+# Environment & Configuration
+config.env
+.env
+.env.local
+.env.*.local
+
+# Storage & Uploads
+/storage/logs/*
+/storage/cache/*
+/storage/uploads/*
+/storage/backups/*
+/storage/sessions/*
+!/storage/exports/.gitkeep
+!/storage/logs/.gitkeep
+!/storage/cache/.gitkeep
+!/storage/uploads/.gitkeep
+!/storage/backups/.gitkeep
+!/storage/sessions/.gitkeep
+
+# IDE & Editor Files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+.DS_Store
+Thumbs.db
+
+# Backup Files
+*.sql
+*.sql.gz
+*.backup
+*.bak
+*.old
+*_backup.php
+*_old.php
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Desktop.ini
+
+# Composer
+composer.phar
+composer.lock
+
+# PHPUnit
+/phpunit.xml
+.phpunit.result.cache
+/coverage/
+
+# Build files
+/dist/
+/build/
+
+# Temporary files
+*.tmp
+*.temp
+/tmp/
+
+# Database dumps (keep in separate backup location)
+*.sql
+!database.sql
+!database_migration*.sql
+!database_fixes*.sql
+!verify_pos_setup.sql
+
