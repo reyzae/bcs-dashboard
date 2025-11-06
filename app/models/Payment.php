@@ -68,13 +68,14 @@ class Payment extends BaseModel {
             // Check settings table exists
             $result = $this->pdo->query("SHOW TABLES LIKE 'settings'");
             if ($result && $result->rowCount() > 0) {
-                $sql = "SELECT setting_key, setting_value FROM settings WHERE setting_key IN (
+                // Kolom pada tabel settings adalah `key` dan `value` (kata kunci MySQL), gunakan backtick
+                $sql = "SELECT `key`, `value` FROM settings WHERE `key` IN (
                     'bank_default','bank_bca_name','bank_bca_account','bank_mandiri_name','bank_mandiri_account','bank_bni_name','bank_bni_account'
                 )";
                 $stmt = $this->pdo->query($sql);
                 $settings = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 $map = [];
-                foreach ($settings as $s) { $map[$s['setting_key']] = $s['setting_value']; }
+                foreach ($settings as $s) { $map[$s['key']] = $s['value']; }
 
                 // Override bank accounts with settings
                 if (!empty($map['bank_bca_name'])) $bankAccounts['bca']['name'] = $map['bank_bca_name'];
