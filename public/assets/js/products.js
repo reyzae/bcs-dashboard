@@ -34,7 +34,7 @@ class ProductManager {
     async loadCategories() {
         try {
             console.log('📁 Loading categories...');
-            const response = await app.apiCall('../api_dashboard.php?action=categories&method=list');
+            const response = await app.apiCall('../api.php?controller=category&action=getActive');
             
             if (response.success) {
                 this.categories = response.data || [];
@@ -74,7 +74,7 @@ class ProductManager {
             }
             
             // Build API URL
-            let url = `../api_dashboard.php?action=products&method=list&page=${this.currentPage}&limit=${this.itemsPerPage}`;
+            let url = `../api.php?controller=product&action=list&page=${this.currentPage}&limit=${this.itemsPerPage}`;
             if (this.searchQuery) url += `&search=${encodeURIComponent(this.searchQuery)}`;
             if (this.categoryFilter) url += `&category_id=${this.categoryFilter}`;
             if (this.statusFilter !== '') url += `&is_active=${this.statusFilter}`;
@@ -505,31 +505,40 @@ class ProductManager {
             // Show loading toast
             app.showToast('Saving product...', 'info');
             
-            // Upload image first if there's a selected file
-            if (window.productImageUpload && window.productImageUpload.hasImage()) {
-                console.log('📤 Image detected - Starting upload...');
-                const imagePath = await window.productImageUpload.uploadImage();
-                console.log('📁 Image upload result:', imagePath);
+            // Handle image: upload if new file selected, otherwise keep existing path
+            if (window.productImageUpload) {
+                const existingPath = window.productImageUpload.getImagePath?.() || null;
+                const hasSelectedFile = !!window.productImageUpload.selectedFile;
                 
-                if (imagePath) {
-                    data.image = imagePath;
-                    console.log('✅ Image successfully added to product data!');
-                    console.log('🖼️ Final image value in data:', data.image);
+                if (hasSelectedFile) {
+                    console.log('📤 New image selected - Starting upload...');
+                    const imagePath = await window.productImageUpload.uploadImage();
+                    console.log('📁 Upload result:', imagePath);
+                    if (imagePath) {
+                        data.image = imagePath;
+                        console.log('✅ Image path set from upload:', data.image);
+                    } else {
+                        console.warn('⚠️ Upload returned null; fallback to existing path if any');
+                        if (existingPath) {
+                            data.image = existingPath;
+                        }
+                    }
+                } else if (existingPath) {
+                    console.log('ℹ️ No new image; keep existing path');
+                    data.image = existingPath;
                 } else {
-                    console.warn('⚠️ Image upload returned empty/null');
+                    console.log('ℹ️ No image to attach');
                 }
-            } else {
-                console.log('ℹ️ No image to upload');
             }
             
             console.log('📦 Final product data before send:', JSON.stringify(data, null, 2));
             
             let url, method;
             if (this.currentProductId) {
-                url = `../api_dashboard.php?action=products&method=update&id=${this.currentProductId}`;
+                url = `../api.php?controller=product&action=update&id=${this.currentProductId}`;
                 method = 'POST';
             } else {
-                url = `../api_dashboard.php?action=products&method=create`;
+                url = `../api.php?controller=product&action=create`;
                 method = 'POST';
             }
 
@@ -560,7 +569,7 @@ class ProductManager {
 
     async editProduct(id) {
         try {
-            const response = await app.apiCall(`../api_dashboard.php?action=products&method=get&id=${id}`);
+            const response = await app.apiCall(`../api.php?controller=product&action=get&id=${id}`);
             
             if (response.success && response.data) {
                 this.showProductModal(response.data);
@@ -588,7 +597,7 @@ class ProductManager {
         }
 
         try {
-            const response = await app.apiCall(`../api_dashboard.php?action=products&method=update&id=${id}`, {
+            const response = await app.apiCall(`../api.php?controller=product&action=update&id=${id}`, {
                 method: 'POST',
                 body: JSON.stringify({ stock_quantity: stockQuantity })
             });
@@ -607,7 +616,7 @@ class ProductManager {
 
     async toggleStatus(id, isActive) {
         try {
-            const response = await app.apiCall(`../api_dashboard.php?action=products&method=update&id=${id}`, {
+            const response = await app.apiCall(`../api.php?controller=product&action=update&id=${id}`, {
                 method: 'POST',
                 body: JSON.stringify({ is_active: isActive ? 1 : 0 })
             });
@@ -637,7 +646,7 @@ class ProductManager {
         }
 
         try {
-            const response = await app.apiCall(`../api_dashboard.php?action=products&method=delete&id=${id}`, {
+            const response = await app.apiCall(`../api.php?controller=product&action=delete&id=${id}`, {
                 method: 'POST'
             });
 

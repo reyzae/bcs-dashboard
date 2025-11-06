@@ -12,9 +12,11 @@
 class PaymentGatewayService {
     private $gateway;
     private $config;
+    private $configOverride;
     
-    public function __construct($gateway = 'midtrans') {
+    public function __construct($gateway = 'midtrans', $configOverride = null) {
         $this->gateway = strtolower($gateway);
+        $this->configOverride = is_array($configOverride) ? $configOverride : null;
         $this->loadConfig();
     }
     
@@ -48,6 +50,11 @@ class PaymentGatewayService {
                 ]
             ]
         ];
+
+        // Merge override config from caller (e.g., settings from DB)
+        if ($this->configOverride) {
+            $this->config = array_replace_recursive($this->config, $this->configOverride);
+        }
     }
     
     /**

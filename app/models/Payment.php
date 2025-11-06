@@ -56,7 +56,45 @@ class Payment extends BaseModel {
         require_once __DIR__ . '/../services/PaymentGatewayService.php';
         
         $gateway = $_ENV['PAYMENT_GATEWAY'] ?? 'midtrans';
-        $gatewayService = new PaymentGatewayService($gateway);
+
+        // Load bank account settings from DB (if available)
+        $bankAccounts = [
+            'bca' => [ 'name' => 'Your Business Name', 'account' => '1234567890', 'bank_name' => 'Bank Central Asia (BCA)' ],
+            'mandiri' => [ 'name' => 'Your Business Name', 'account' => '1234567890', 'bank_name' => 'Bank Mandiri' ],
+            'bni' => [ 'name' => 'Your Business Name', 'account' => '1234567890', 'bank_name' => 'Bank Negara Indonesia (BNI)' ]
+        ];
+
+        try {
+            // Check settings table exists
+            $result = $this->pdo->query("SHOW TABLES LIKE 'settings'");
+            if ($result && $result->rowCount() > 0) {
+                $sql = "SELECT setting_key, setting_value FROM settings WHERE setting_key IN (
+                    'bank_default','bank_bca_name','bank_bca_account','bank_mandiri_name','bank_mandiri_account','bank_bni_name','bank_bni_account'
+                )";
+                $stmt = $this->pdo->query($sql);
+                $settings = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                $map = [];
+                foreach ($settings as $s) { $map[$s['setting_key']] = $s['setting_value']; }
+
+                // Override bank accounts with settings
+                if (!empty($map['bank_bca_name'])) $bankAccounts['bca']['name'] = $map['bank_bca_name'];
+                if (!empty($map['bank_bca_account'])) $bankAccounts['bca']['account'] = $map['bank_bca_account'];
+                if (!empty($map['bank_mandiri_name'])) $bankAccounts['mandiri']['name'] = $map['bank_mandiri_name'];
+                if (!empty($map['bank_mandiri_account'])) $bankAccounts['mandiri']['account'] = $map['bank_mandiri_account'];
+                if (!empty($map['bank_bni_name'])) $bankAccounts['bni']['name'] = $map['bank_bni_name'];
+                if (!empty($map['bank_bni_account'])) $bankAccounts['bni']['account'] = $map['bank_bni_account'];
+
+                // If bank is empty or 'default', use default from settings
+                if (!$bank || strtolower($bank) === 'default') {
+                    $bank = $map['bank_default'] ?? 'bca';
+                }
+            }
+        } catch (Exception $e) {
+            // Fallback silently
+        }
+
+        $configOverride = [ 'bank_accounts' => $bankAccounts ];
+        $gatewayService = new PaymentGatewayService($gateway, $configOverride);
         
         $result = $gatewayService->createBankTransfer($orderId, $amount, $bank);
         

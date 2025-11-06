@@ -326,7 +326,7 @@ $dashboard_title = getDashboardTitle();
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <a href="index.php" class="sidebar-logo">
-                    <i class="fas fa-cube"></i>
+                    <img src="../assets/img/logo.svg" alt="Bytebalok" class="logo-img">
                     <h1>Bytebalok</h1>
                 </a>
             </div>

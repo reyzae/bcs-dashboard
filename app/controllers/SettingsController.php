@@ -71,6 +71,17 @@ class SettingsController extends BaseController {
         return [
             'enable_tax' => '1',
             'tax_rate' => '11',
+            // Shop-specific tax settings
+            'enable_tax_shop' => '0',
+            'tax_rate_shop' => '11',
+            // Bank transfer settings (default values)
+            'bank_default' => 'bca',
+            'bank_bca_name' => 'Bytebalok',
+            'bank_bca_account' => '1234567890',
+            'bank_mandiri_name' => 'Bytebalok',
+            'bank_mandiri_account' => '1234567890',
+            'bank_bni_name' => 'Bytebalok',
+            'bank_bni_account' => '1234567890',
             'currency' => 'IDR',
             'timezone' => 'Asia/Jakarta',
             'date_format' => 'd/m/Y',
@@ -221,6 +232,17 @@ class SettingsController extends BaseController {
         $defaults = [
             'enable_tax' => '1',
             'tax_rate' => '11',
+            // Shop-specific tax defaults
+            'enable_tax_shop' => '0',
+            'tax_rate_shop' => '11',
+            // Bank transfer defaults
+            'bank_default' => 'bca',
+            'bank_bca_name' => 'Bytebalok',
+            'bank_bca_account' => '1234567890',
+            'bank_mandiri_name' => 'Bytebalok',
+            'bank_mandiri_account' => '1234567890',
+            'bank_bni_name' => 'Bytebalok',
+            'bank_bni_account' => '1234567890',
             'currency' => 'IDR',
             'timezone' => 'Asia/Jakarta',
             'date_format' => 'd/m/Y',
@@ -246,6 +268,37 @@ class SettingsController extends BaseController {
         
         return $defaults[$key] ?? '';
     }
+
+    /**
+     * Get public shop settings (no authentication)
+     * Returns only keys needed by public shop
+     */
+    public function get_public_shop() {
+        try {
+            $data = [
+                'enable_tax_shop' => $this->getDefaultValue('enable_tax_shop'),
+                'tax_rate_shop' => $this->getDefaultValue('tax_rate_shop')
+            ];
+
+            // Attempt to read from DB if table exists
+            if ($this->tableExists('settings')) {
+                $sql = "SELECT setting_key, setting_value FROM settings WHERE setting_key IN ('enable_tax_shop','tax_rate_shop')";
+                $stmt = $this->pdo->query($sql);
+                $settings = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                foreach ($settings as $s) {
+                    $data[$s['setting_key']] = $s['setting_value'];
+                }
+            }
+
+            $this->sendSuccess($data);
+        } catch (Exception $e) {
+            // Fallback to defaults
+            $this->sendSuccess([
+                'enable_tax_shop' => $this->getDefaultValue('enable_tax_shop'),
+                'tax_rate_shop' => $this->getDefaultValue('tax_rate_shop')
+            ]);
+        }
+    }
 }
 
 // Handle requests
@@ -263,6 +316,10 @@ switch ($action) {
         break;
     case 'update':
         $settingsController->updateSettings();
+        break;
+    case 'get_public_shop':
+        // Public shop settings endpoint (no auth)
+        $settingsController->get_public_shop();
         break;
     default:
         $settingsController->sendError('Invalid action', 400);

@@ -12,6 +12,7 @@ class Transaction extends BaseModel {
         'transaction_number', 'customer_id', 'user_id', 'transaction_type',
         'subtotal', 'discount_amount', 'discount_percentage', 'tax_amount',
         'tax_percentage', 'total_amount', 'payment_method', 'payment_reference',
+        'cash_received', 'cash_change',
         'status', 'notes'
     ];
     
@@ -125,7 +126,7 @@ class Transaction extends BaseModel {
      */
     public function getItems($transactionId) {
         $sql = "SELECT ti.*, 
-                       COALESCE(ti.product_name, p.name) as product_name,
+                       p.name as product_name,
                        p.sku as product_sku,
                        c.name as category_name
                 FROM transaction_items ti 
@@ -207,13 +208,12 @@ class Transaction extends BaseModel {
                 $itemData['total_price'] = ($quantity * $unitPrice) - $discountAmount;
             }
             
-            $sql = "INSERT INTO transaction_items (transaction_id, product_id, product_name, quantity, unit_price, discount_amount, discount_percentage, total_price) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+            $sql = "INSERT INTO transaction_items (transaction_id, product_id, quantity, unit_price, discount_amount, discount_percentage, total_price) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?)";
             $stmt = $this->pdo->prepare($sql);
             $result = $stmt->execute([
                 $itemData['transaction_id'],
                 $itemData['product_id'],
-                $itemData['product_name'] ?? null,
                 $itemData['quantity'],
                 $itemData['unit_price'],
                 $itemData['discount_amount'] ?? 0,

@@ -1,4 +1,4 @@
-            <!-- Page Content Ends Here -->
+<!-- Page Content Ends Here -->
             </div>
             
             <!-- Footer -->
@@ -6,7 +6,7 @@
                 <div class="footer-content">
                     <div class="footer-left">
                         <div class="footer-brand">
-                            <i class="fas fa-cube"></i>
+                            <img src="../assets/img/logo.svg" alt="Bytebalok" class="logo-img" style="height:20px;">
                             <span>© <?php echo date('Y'); ?> <strong>Bytebalok</strong> POS System</span>
                         </div>
                         <div class="footer-meta">
@@ -318,62 +318,79 @@
     }
 
     // Notification functions
+    let lastNotificationCount = 0;
     async function loadNotificationCount() {
-        // TEMPORARILY DISABLED - API endpoint not yet implemented
-        console.log('ℹ️ Notifications disabled (API pending)');
-        return;
-        
         try {
-            const response = await fetch('../api.php?action=notifications&method=count');
+            const response = await fetch('../api_dashboard.php?action=notifications&method=count', {
+                credentials: 'include'
+            });
             const data = await response.json();
             
             const countBadge = document.getElementById('notificationCount');
-            if (data.success && data.data.count > 0) {
-                countBadge.textContent = data.data.count;
+            const count = (data && data.success && data.data && typeof data.data.count === 'number') ? data.data.count : 0;
+            
+            // Show badge when there are unread notifications
+            if (count > 0) {
+                countBadge.textContent = count;
                 countBadge.style.display = 'flex';
             } else {
                 countBadge.style.display = 'none';
             }
+            
+            // Show toast when new notifications arrive
+            if (count > lastNotificationCount) {
+                if (window.showToast) {
+                    window.showToast('Ada pesanan/notifikasi baru masuk', 'info');
+                }
+            }
+            lastNotificationCount = count;
         } catch (error) {
             console.error('Error loading notification count:', error);
         }
     }
 
     async function loadNotifications() {
-        // TEMPORARILY DISABLED - API endpoint not yet implemented
-        console.log('ℹ️ Notifications list disabled (API pending)');
         const notificationsList = document.getElementById('notificationsList');
-        notificationsList.innerHTML = '<div class="notifications-empty"><i class="fas fa-bell-slash"></i><p>No notifications</p></div>';
-        return;
-        
         notificationsList.innerHTML = '<div class="notifications-loading"><div class="spinner-sm"></div></div>';
         
         try {
-            const response = await fetch('../api.php?action=notifications&method=list');
+            const response = await fetch('../api_dashboard.php?action=notifications&method=list', {
+                credentials: 'include'
+            });
             const data = await response.json();
             
-            if (data.success && data.data.notifications.length > 0) {
-                notificationsList.innerHTML = data.data.notifications.map(notif => `
+            const notifications = (data && data.success && data.data && Array.isArray(data.data.notifications)) ? data.data.notifications : [];
+            if (notifications.length > 0) {
+                notificationsList.innerHTML = notifications.map(notif => {
+                    // Optional deep-link for order/payment notifications
+                    let linkHTML = '';
+                    if (notif.type === 'order' && notif.order_id) {
+                        linkHTML = `<a href="orders.php?id=${notif.order_id}" class="notification-link">Lihat Order</a>`;
+                    } else if (notif.type === 'payment' && notif.order_id) {
+                        linkHTML = `<a href="orders.php?id=${notif.order_id}" class="notification-link">Lihat Pembayaran</a>`;
+                    }
+                    return `
                     <div class="notification-item ${notif.is_read ? '' : 'unread'}" data-id="${notif.id}">
                         <div class="notification-icon notification-${notif.type}">
                             <i class="fas fa-${getNotificationIcon(notif.type)}"></i>
                         </div>
                         <div class="notification-content">
                             <div class="notification-title">${notif.title}</div>
-                            <div class="notification-message">${notif.message}</div>
-                            <div class="notification-time">${notif.time_ago}</div>
+                            <div class="notification-message">${notif.message} ${linkHTML}</div>
+                            <div class="notification-time">${notif.time_ago || ''}</div>
                         </div>
                         ${!notif.is_read ? '<div class="notification-dot"></div>' : ''}
-                    </div>
-                `).join('');
+                    </div>`;
+                }).join('');
                 
                 // Add click handlers
                 document.querySelectorAll('.notification-item').forEach(item => {
                     item.addEventListener('click', function() {
                         const notifId = this.dataset.id;
                         markNotificationAsRead(notifId);
-                        if (item.querySelector('a')) {
-                            window.location.href = item.querySelector('a').href;
+                        const link = this.querySelector('.notification-link');
+                        if (link) {
+                            window.location.href = link.getAttribute('href');
                         }
                     });
                 });
@@ -381,7 +398,7 @@
                 notificationsList.innerHTML = `
                     <div class="notifications-empty">
                         <i class="fas fa-bell-slash"></i>
-                        <p>No new notifications</p>
+                        <p>Tidak ada notifikasi baru</p>
                     </div>
                 `;
             }
@@ -390,7 +407,7 @@
             notificationsList.innerHTML = `
                 <div class="notifications-error">
                     <i class="fas fa-exclamation-triangle"></i>
-                    <p>Failed to load notifications</p>
+                    <p>Gagal memuat notifikasi</p>
                 </div>
             `;
         }
@@ -401,20 +418,19 @@
             'info': 'info-circle',
             'success': 'check-circle',
             'warning': 'exclamation-triangle',
-            'error': 'times-circle'
+            'error': 'times-circle',
+            'order': 'shopping-cart',
+            'payment': 'receipt'
         };
         return icons[type] || 'bell';
     }
 
     async function markNotificationAsRead(notificationId) {
-        // TEMPORARILY DISABLED - API endpoint not yet implemented
-        console.log('ℹ️ Mark notification disabled (API pending)');
-        return;
-        
         try {
-            await fetch('../api.php?action=notifications&method=markRead', {
+            await fetch('../api_dashboard.php?action=notifications&method=markRead', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
+                credentials: 'include',
                 body: JSON.stringify({notification_id: notificationId})
             });
             loadNotificationCount();
@@ -426,13 +442,10 @@
 
     // Mark all as read
     document.getElementById('markAllReadBtn')?.addEventListener('click', async function() {
-        // TEMPORARILY DISABLED - API endpoint not yet implemented
-        console.log('ℹ️ Mark all read disabled (API pending)');
-        return;
-        
         try {
-            await fetch('../api.php?action=notifications&method=markAllRead', {
-                method: 'POST'
+            await fetch('../api_dashboard.php?action=notifications&method=markAllRead', {
+                method: 'POST',
+                credentials: 'include'
             });
             loadNotificationCount();
             loadNotifications();
@@ -457,7 +470,7 @@
                 <div class="modal-body">
                     <div class="about-content">
                         <div class="about-logo">
-                            <i class="fas fa-cube fa-3x" style="color: #667eea;"></i>
+                            <img src="../assets/img/logo.svg" alt="Bytebalok" style="height:48px;">
                         </div>
                         <h2 style="text-align: center; margin: 16px 0;">Bytebalok POS System</h2>
                         <p style="text-align: center; color: #666; margin-bottom: 24px;">

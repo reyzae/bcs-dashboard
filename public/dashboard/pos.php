@@ -79,7 +79,7 @@ if (!isset($_SESSION['user_role'])) {
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <a href="index.php" class="sidebar-logo">
-                    <i class="fas fa-chart-line"></i>
+                    <img src="../assets/img/logo.svg" alt="Bytebalok" class="logo-img">
                     <h1>Bytebalok</h1>
                 </a>
             </div>
@@ -135,7 +135,7 @@ if (!isset($_SESSION['user_role'])) {
                         <i class="fas fa-bars"></i>
                     </button>
                     <div class="pos-branding">
-                        <i class="fas fa-cash-register"></i>
+                        <img src="../assets/img/logo.svg" alt="Bytebalok" class="logo-img">
                         <h1>POS</h1>
                     </div>
                     <div class="header-stats">
@@ -600,27 +600,36 @@ if (!isset($_SESSION['user_role'])) {
             // Load tax settings from database
             loadTaxSettings();
             
-            // FORCE SIDEBAR TO BE EXPANDED ON POS PAGE
+            // Ensure sidebar behavior: force expanded ONLY on desktop (>=1025px)
             const sidebar = document.getElementById('sidebar');
             if (sidebar) {
-                // Remove any collapsed/minimized classes
+                const isDesktop = window.innerWidth >= 1025;
+                // Clean up any collapsed states
                 sidebar.classList.remove('collapsed', 'minimized', 'hidden');
-                sidebar.classList.add('expanded', 'visible');
                 
-                // Force width and visibility with inline styles
-                sidebar.style.width = '280px';
-                sidebar.style.transform = 'translateX(0)';
-                sidebar.style.display = 'block';
-                
-                // Ensure all text is visible
-                const navSpans = sidebar.querySelectorAll('.nav-link span, .sidebar-logo h1');
-                navSpans.forEach(span => {
-                    span.style.display = 'inline';
-                    span.style.opacity = '1';
-                    span.style.visibility = 'visible';
-                });
-                
-                console.log('✅ Sidebar forced to full width on POS page');
+                if (isDesktop) {
+                    // Desktop: keep it visible and full width
+                    sidebar.classList.add('expanded', 'visible');
+                    sidebar.style.width = '280px';
+                    sidebar.style.transform = 'translateX(0)';
+                    sidebar.style.display = 'block';
+                    
+                    // Ensure text labels visible
+                    const navSpans = sidebar.querySelectorAll('.nav-link span, .sidebar-logo h1');
+                    navSpans.forEach(span => {
+                        span.style.display = 'inline';
+                        span.style.opacity = '1';
+                        span.style.visibility = 'visible';
+                    });
+                    console.log('✅ Sidebar set to full width (desktop)');
+                } else {
+                    // Tablet/mobile: rely on toggle; avoid forcing open to prevent overlap
+                    sidebar.classList.remove('expanded');
+                    sidebar.style.removeProperty('width');
+                    sidebar.style.removeProperty('transform');
+                    sidebar.style.removeProperty('display');
+                    console.log('ℹ️ Sidebar uses toggle behavior (tablet/mobile)');
+                }
             }
             
             // User menu toggle

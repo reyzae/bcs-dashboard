@@ -90,13 +90,13 @@ abstract class BaseController {
         
         echo json_encode($data, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
         
-        // DISABLED: Log API response (catch any logging errors) - temporarily disabled for debugging
-        // try {
-        //     $endpoint = $_SERVER['REQUEST_URI'] ?? 'unknown';
-        //     $this->logger->apiResponse($endpoint, $statusCode, $data['success']);
-        // } catch (Exception $e) {
-        //     error_log('Failed to log API response: ' . $e->getMessage());
-        // }
+        // Log API response (catch any logging errors)
+        try {
+            $endpoint = $_SERVER['REQUEST_URI'] ?? 'unknown';
+            $this->logger->apiResponse($endpoint, $statusCode, $data['success']);
+        } catch (Exception $e) {
+            error_log('Failed to log API response: ' . $e->getMessage());
+        }
         
         exit();
     }
@@ -130,12 +130,12 @@ abstract class BaseController {
             $response['errors'] = $errors;
         }
         
-        // DISABLED: Log error (catch any logging errors to prevent masking the original error) - temporarily disabled for debugging
-        // try {
-        //     $this->logger->error($message, ['status_code' => $statusCode, 'errors' => $errors]);
-        // } catch (Exception $e) {
-        //     error_log('Failed to log error: ' . $e->getMessage());
-        // }
+        // Log error (catch any logging errors to prevent masking the original error)
+        try {
+            $this->logger->error($message, ['status_code' => $statusCode, 'errors' => $errors]);
+        } catch (Exception $e) {
+            error_log('Failed to log error: ' . $e->getMessage());
+        }
         
         $this->sendResponse($response, $statusCode);
     }

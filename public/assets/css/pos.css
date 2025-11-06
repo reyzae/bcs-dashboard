@@ -9,15 +9,17 @@
    Override default mobile collapse behavior with MAXIMUM SPECIFICITY
    ============================================ */
 
-/* ULTRA HIGH SPECIFICITY - Force sidebar to show on POS page */
-html.pos-page body .dashboard .sidebar#sidebar,
-html.pos-page .sidebar,
-body:has(.pos-main) .sidebar {
-    width: 280px !important;
-    transform: translateX(0) !important;
-    position: fixed !important;
-    left: 0 !important;
-    display: block !important;
+/* ULTRA HIGH SPECIFICITY - Force sidebar to show on POS page (DESKTOP ONLY) */
+@media (min-width: 1025px) {
+    html.pos-page body .dashboard .sidebar#sidebar,
+    html.pos-page .sidebar,
+    body:has(.pos-main) .sidebar {
+        width: 280px !important;
+        transform: translateX(0) !important;
+        position: fixed !important;
+        left: 0 !important;
+        display: block !important;
+    }
 }
 
 /* Force all text elements to be visible - ULTRA HIGH SPECIFICITY */
@@ -34,34 +36,16 @@ body:has(.pos-main) .sidebar .nav-link span {
     max-width: none !important;
 }
 
-/* Ensure main content has proper margin for sidebar */
-html.pos-page body .dashboard .main-content.pos-main,
-html.pos-page .main-content.pos-main,
-body:has(.pos-main) .main-content.pos-main {
-    margin-left: 280px !important;
-}
-
-/* Override ALL media queries for screens < 1024px on POS page */
-@media (max-width: 1024px) {
-    html.pos-page body .dashboard .sidebar#sidebar,
-    html.pos-page .sidebar,
-    body:has(.pos-main) .sidebar {
-        transform: translateX(0) !important;
-        width: 280px !important;
-        display: block !important;
-    }
-    
-    html.pos-page body .dashboard .sidebar#sidebar .sidebar-nav .nav-link span,
-    html.pos-page .sidebar .nav-link span {
-        display: inline !important;
-    }
-    
+/* Ensure main content has proper margin for sidebar (DESKTOP ONLY) */
+@media (min-width: 1025px) {
     html.pos-page body .dashboard .main-content.pos-main,
     html.pos-page .main-content.pos-main,
     body:has(.pos-main) .main-content.pos-main {
         margin-left: 280px !important;
     }
 }
+
+/* Remove forced visibility on screens < 1025px. Use off-canvas behavior instead. */
 
 /* On very small screens (mobile < 768px), allow sidebar to be toggleable */
 @media (max-width: 768px) {
@@ -83,6 +67,23 @@ body:has(.pos-main) .main-content.pos-main {
     html.pos-page .main-content.pos-main,
     body:has(.pos-main) .main-content.pos-main {
         margin-left: 0 !important;
+    }
+}
+
+/* Tablet & small desktop (769px–1024px): only push content when sidebar is open */
+@media (min-width: 769px) and (max-width: 1024px) {
+    html.pos-page body .dashboard .sidebar#sidebar.open,
+    html.pos-page .sidebar.open,
+    body:has(.pos-main) .sidebar.open {
+        transform: translateX(0) !important;
+        width: 280px !important;
+    }
+
+    /* Apply left margin ONLY when the sidebar is open */
+    html.pos-page body .dashboard .sidebar#sidebar.open + .main-content.pos-main,
+    html.pos-page .sidebar.open + .main-content.pos-main,
+    body:has(.pos-main) .sidebar.open + .main-content.pos-main {
+        margin-left: 280px !important;
     }
 }
 
@@ -209,6 +210,14 @@ body:has(.pos-main) .sidebar .sidebar-nav {
     font-size: 1.25rem;
     font-weight: 700;
     letter-spacing: 0.5px;
+}
+
+/* Ensure SVG logo aligns nicely in POS header */
+.pos-branding .logo-img {
+    height: 1.5rem;
+    width: auto;
+    display: inline-block;
+    vertical-align: middle;
 }
 
 .header-stats {

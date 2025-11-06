@@ -27,7 +27,7 @@
             <div class="header-content">
                 <div class="logo">
                     <a href="index.php">
-                        <i class="fas fa-store"></i>
+                        <img src="../assets/img/logo.svg" alt="Bytebalok" class="logo-img">
                         <h1>Bytebalok Shop</h1>
                     </a>
                 </div>

@@ -249,10 +249,25 @@ class PosController extends BaseController {
             $tax_amount = $taxable_amount * ($tax_percentage / 100);
             
             $total_amount = $taxable_amount + $tax_amount;
-            
+
             // Ensure customer_id is null or integer
             $customerId = isset($data['customer_id']) && !empty($data['customer_id']) ? (int)$data['customer_id'] : null;
             error_log('📝 Preparing transaction with customer_id: ' . ($customerId ?? 'NULL (walk-in)'));
+
+            // Handle cash payment specifics
+            $cashReceived = null;
+            $cashChange = null;
+            if ($data['payment_method'] === 'cash') {
+                // Use provided cash_received if available; otherwise compute from UI rules
+                if (isset($data['cash_received'])) {
+                    $cashReceived = (float)$data['cash_received'];
+                    $cashChange = max(0, $cashReceived - $total_amount);
+                } else {
+                    // As a fallback, keep nulls; UI already validates sufficient payment
+                    $cashReceived = null;
+                    $cashChange = null;
+                }
+            }
             
             // Prepare transaction data
             $transactionData = [
@@ -267,6 +282,8 @@ class PosController extends BaseController {
                 'total_amount' => $total_amount,
                 'payment_method' => $data['payment_method'],
                 'payment_reference' => $data['payment_reference'] ?? null,
+                'cash_received' => $cashReceived,
+                'cash_change' => $cashChange,
                 'status' => 'completed',
                 'notes' => $data['notes'] ?? null
             ];
@@ -530,14 +547,19 @@ class PosController extends BaseController {
             $today = date('Y-m-d');
             $stats = $this->transactionModel->getSalesStats($today, $today);
             
-            // Map field names for frontend compatibility
+            // Backend returns today_revenue and today_count; map to frontend keys
+            $todayRevenue = (float)($stats['today_revenue'] ?? 0);
+            $todayCount = (int)($stats['today_count'] ?? 0);
+            $averageSale = $todayCount > 0 ? ($todayRevenue / $todayCount) : 0;
+            
             $response = [
-                'today_sales' => $stats['total_sales'] ?? 0,
-                'today_transactions' => $stats['total_transactions'] ?? 0,
-                'average_sale' => $stats['average_sale'] ?? 0,
-                'cash_sales' => $stats['cash_sales'] ?? 0,
-                'card_sales' => $stats['card_sales'] ?? 0,
-                'qris_sales' => $stats['qris_sales'] ?? 0
+                'today_sales' => $todayRevenue,
+                'today_transactions' => $todayCount,
+                'average_sale' => $averageSale,
+                // Filled below using payment breakdown query
+                'cash_sales' => 0,
+                'card_sales' => 0,
+                'qris_sales' => 0
             ];
             
             // Get transaction count by payment method
@@ -553,6 +575,18 @@ class PosController extends BaseController {
             $paymentStats = $stmt->fetchAll();
             
             $response['payment_breakdown'] = $paymentStats;
+            // Sum sales by payment method for convenience
+            foreach ($paymentStats as $p) {
+                $method = strtolower($p['payment_method'] ?? '');
+                $total = (float)($p['total'] ?? 0);
+                if ($method === 'cash') {
+                    $response['cash_sales'] += $total;
+                } elseif ($method === 'card') {
+                    $response['card_sales'] += $total;
+                } elseif ($method === 'qris') {
+                    $response['qris_sales'] += $total;
+                }
+            }
             
             $this->sendSuccess($response);
         } catch (Exception $e) {

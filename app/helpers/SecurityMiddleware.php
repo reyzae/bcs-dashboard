@@ -126,8 +126,8 @@ class SecurityMiddleware {
      * Enhanced to handle localhost with different ports
      */
     public static function validateOrigin() {
-        // For development: allow localhost with any port
-        $isDevelopment = true; // Change to false in production
+        // Check environment from config
+        $isDevelopment = ($_ENV['APP_ENV'] ?? 'development') !== 'production';
         
         if ($isDevelopment) {
             // Allow all localhost/127.0.0.1 requests in development
@@ -140,13 +140,16 @@ class SecurityMiddleware {
             }
         }
         
-        // Production validation
+        // Production validation - use APP_URL from config
+        $appUrl = $_ENV['APP_URL'] ?? '';
         $allowedOrigins = [
             'http://localhost',
             'http://127.0.0.1',
-            'https://yourdomain.com', // Add your production domain here
+            $appUrl, // Use configured APP_URL
             $_SERVER['HTTP_HOST'] ?? ''
         ];
+        // Remove empty values
+        $allowedOrigins = array_filter($allowedOrigins);
         
         $origin = $_SERVER['HTTP_ORIGIN'] ?? $_SERVER['HTTP_REFERER'] ?? '';
         

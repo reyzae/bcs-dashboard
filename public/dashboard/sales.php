@@ -179,7 +179,7 @@ document.addEventListener('DOMContentLoaded', () => {
 async function loadReportData() {
     try {
         // Load sales statistics
-        const response = await fetch('../api_dashboard.php?action=dashboard&method=managerStats');
+        const response = await fetch('/api.php?controller=dashboard&action=managerStats');
         const data = await response.json();
         
         if (data.success) {
@@ -200,7 +200,13 @@ async function loadReportData() {
 
 async function loadSalesChart() {
     try {
-        const response = await fetch('../api_dashboard.php?action=dashboard&method=salesChart&days=30');
+        // Ambil 30 hari terakhir untuk grafik
+        const endDate = new Date().toISOString().split('T')[0];
+        const start = new Date();
+        start.setDate(start.getDate() - 30);
+        const startDate = start.toISOString().split('T')[0];
+
+        const response = await fetch(`/api.php?controller=transaction&action=daily-sales&start_date=${startDate}&end_date=${endDate}`);
         const data = await response.json();
         
         if (data.success) {
@@ -233,7 +239,8 @@ async function loadSalesChart() {
 
 async function loadCategoryChart() {
     try {
-        const response = await fetch('../api_dashboard.php?action=dashboard&method=categoryPerformance');
+        // Gunakan data stok per kategori sebagai fallback untuk chart
+        const response = await fetch('/api.php?controller=dashboard&action=categoryStock');
         const data = await response.json();
         
         if (data.success && data.data.categories) {
@@ -243,7 +250,7 @@ async function loadCategoryChart() {
                 data: {
                     labels: data.data.categories.map(c => c.name),
                     datasets: [{
-                        data: data.data.categories.map(c => c.total_revenue || 0),
+                        data: data.data.categories.map(c => c.stock_value || 0),
                         backgroundColor: [
                             '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'
                         ]
@@ -262,7 +269,7 @@ async function loadCategoryChart() {
 
 async function loadTopProducts() {
     try {
-        const response = await fetch('../api_dashboard.php?action=dashboard&method=topProducts&limit=10');
+        const response = await fetch('../api.php?controller=dashboard&action=topProducts&limit=10');
         const data = await response.json();
         
         if (data.success && data.data.products) {
@@ -305,7 +312,7 @@ function exportReport(format) {
     const dateFrom = document.getElementById('dateFrom').value;
     const dateTo = document.getElementById('dateTo').value;
     
-    const url = `../api_dashboard.php?action=export&type=${reportType}&format=${format}&from=${dateFrom}&to=${dateTo}`;
+    const url = `/api.php?controller=transaction&action=export&format=${format}&date_from=${dateFrom}&date_to=${dateTo}`;
     window.location.href = url;
 }
 

@@ -44,8 +44,8 @@ class OrderController extends BaseController {
             $this->sendError('Items are required', 400);
         }
         
-        // Validate payment method
-        $validMethods = ['qris', 'transfer', 'cod'];
+        // Validate payment method (COD disabled for public shop)
+        $validMethods = ['qris', 'transfer'];
         if (!in_array($data['payment_method'], $validMethods)) {
             $this->sendError('Invalid payment method', 400);
         }
@@ -82,8 +82,10 @@ class OrderController extends BaseController {
             ];
         }
         
-        // Calculate totals
-        $taxAmount = $subtotal * 0.1; // 10% tax
+        // Calculate totals (respect Shop tax settings)
+        $enableTaxShop = $this->getSettingValue('enable_tax_shop', '0') === '1';
+        $taxRateShop = floatval($this->getSettingValue('tax_rate_shop', '11'));
+        $taxAmount = $enableTaxShop ? round($subtotal * ($taxRateShop / 100), 2) : 0;
         $shippingAmount = $data['shipping_amount'] ?? 0;
         $totalAmount = $subtotal + $taxAmount + $shippingAmount;
         
@@ -121,15 +123,28 @@ class OrderController extends BaseController {
                 
                 $paymentId = $this->paymentModel->createPayment($paymentData);
                 
-                // Generate QR code for QRIS payment
+                // Generate payment info per method
                 if ($data['payment_method'] === 'qris') {
-                    $qrData = $this->paymentModel->generateQRIS($orderId, $totalAmount);
+                    $qrData = $this->paymentModel->generateQRIS($orderId, $totalAmount, [
+                        'name' => $orderData['customer_name'],
+                        'email' => $orderData['customer_email'],
+                        'phone' => $orderData['customer_phone']
+                    ]);
                     $this->paymentModel->update($paymentId, [
                         'qr_string' => $qrData['qr_string'],
                         'qr_code' => $qrData['qr_code_url'],
                         'expired_at' => $qrData['expired_at']
                     ]);
                     $order['payment'] = array_merge(['id' => $paymentId], $qrData);
+                } else if ($data['payment_method'] === 'transfer') {
+                    // Use default bank from settings; Payment model will resolve overrides
+                    $transferData = $this->paymentModel->generateBankTransfer($orderId, $totalAmount, 'default');
+                    // Persist main identifiers for reference
+                    $this->paymentModel->update($paymentId, [
+                        'transaction_id' => $transferData['transaction_id'] ?? null,
+                        'expired_at' => $transferData['expired_at'] ?? null
+                    ]);
+                    $order['payment'] = array_merge(['id' => $paymentId], $transferData);
                 }
                 
                 // Send notification to staff
@@ -146,6 +161,24 @@ class OrderController extends BaseController {
         } catch (Exception $e) {
             $this->sendError('Order failed: ' . $e->getMessage(), 500);
         }
+    }
+
+    /**
+     * Get setting value with fallback
+     */
+    private function getSettingValue($key, $default = '') {
+        try {
+            $sql = "SELECT setting_value FROM settings WHERE setting_key = ?";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute([$key]);
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($row && isset($row['setting_value'])) {
+                return $row['setting_value'];
+            }
+        } catch (Exception $e) {
+            // ignore and fallback
+        }
+        return $default;
     }
     
     /**

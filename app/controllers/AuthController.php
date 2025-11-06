@@ -36,10 +36,17 @@ class AuthController extends BaseController {
             if (session_status() === PHP_SESSION_NONE) {
                 session_start();
             }
+            // Regenerate session ID to prevent fixation
+            session_regenerate_id(true);
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['user_role'] = $user['role'];
             $_SESSION['username'] = $user['username'];
             $_SESSION['full_name'] = $user['full_name'];
+            if (isset($user['email'])) {
+                $_SESSION['user_email'] = $user['email'];
+            }
+            // Initialize session activity timestamp
+            $_SESSION['last_activity'] = time();
             
             $this->logAction('login', 'users', $user['id']);
             $this->sendSuccess($user, 'Login successful');
@@ -95,6 +102,10 @@ class AuthController extends BaseController {
         
         $data = $this->getRequestData();
         $this->validateRequired($data, ['current_password', 'new_password']);
+        // Enforce strong password policy
+        $this->validate($data, [
+            'new_password' => ['password']
+        ]);
         
         $currentPassword = $data['current_password'];
         $newPassword = $data['new_password'];
@@ -103,11 +114,6 @@ class AuthController extends BaseController {
         $user = $this->userModel->find($_SESSION['user_id']);
         if (!password_verify($currentPassword, $user['password'])) {
             $this->sendError('Current password is incorrect', 400);
-        }
-        
-        // Validate new password
-        if (strlen($newPassword) < 6) {
-            $this->sendError('New password must be at least 6 characters', 400);
         }
         
         // Update password

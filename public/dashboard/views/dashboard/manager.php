@@ -283,7 +283,7 @@ async function loadSalesTrendChart() {
         const start = new Date();
         start.setDate(start.getDate() - 30);
         const startDate = start.toISOString().split('T')[0];
-        const response = await fetch(`../api.php?controller=transaction&action=daily-sales&start_date=${startDate}&end_date=${endDate}`);
+        const response = await fetch(`/api.php?controller=transaction&action=daily-sales&start_date=${startDate}&end_date=${endDate}`);
         const data = await response.json();
         if (data.success) {
             window.renderSalesTrendChart({ labels: data.data.labels, sales: data.data.sales });

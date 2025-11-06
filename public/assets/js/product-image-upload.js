@@ -205,7 +205,7 @@ class ProductImageUpload {
         try {
             this.showProgress(0);
             
-            const response = await fetch('../api_dashboard.php?action=products&method=uploadImage', {
+            const response = await fetch('../api.php?controller=product&action=uploadImage', {
                 method: 'POST',
                 body: formData
             });
@@ -252,13 +252,15 @@ class ProductImageUpload {
     loadExistingImage(imagePath) {
         if (!imagePath) return;
         
-        this.currentImagePath = imagePath;
-        this.preview.src = '../uploads/products/' + imagePath;
+        // Normalize: if path already includes 'uploads/', use as-is; otherwise treat as filename
+        const normalizedPath = imagePath.includes('uploads/') ? imagePath : ('uploads/products/' + imagePath);
+        this.currentImagePath = normalizedPath;
+        this.preview.src = '../' + normalizedPath;
         this.dropZone.style.display = 'none';
         this.previewArea.style.display = 'block';
         
         // Set file info (if available)
-        document.getElementById('imageFileName').textContent = imagePath;
+        document.getElementById('imageFileName').textContent = normalizedPath.split('/').pop();
     }
     
     getImagePath() {

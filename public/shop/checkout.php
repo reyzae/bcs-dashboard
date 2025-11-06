@@ -27,7 +27,7 @@
             <div class="header-content">
                 <div class="logo">
                     <a href="index.php">
-                        <i class="fas fa-store"></i>
+                        <img src="../assets/img/logo.svg" alt="Bytebalok" class="logo-img">
                         <h1>Bytebalok Shop</h1>
                     </a>
                 </div>
@@ -114,16 +114,6 @@
                                     </div>
                                 </label>
                                 
-                                <label class="payment-method-option">
-                                    <input type="radio" name="payment_method" value="cod">
-                                    <div class="payment-method-card">
-                                        <i class="fas fa-money-bill"></i>
-                                        <div>
-                                            <strong>Cash on Delivery</strong>
-                                            <span>Pay when you receive</span>
-                                        </div>
-                                    </div>
-                                </label>
                             </div>
                         </div>
 
@@ -160,7 +150,7 @@
                         </div>
                         
                         <div class="summary-row">
-                            <span>Tax (10%)</span>
+                            <span id="checkoutTaxLabel">Tax (Inactive)</span>
                             <span id="checkoutTax">Rp 0</span>
                         </div>
                         
@@ -214,21 +204,18 @@
                         <h3>Bank Transfer Details</h3>
                         <div class="bank-details">
                             <div class="bank-info">
-                                <p><strong>Bank Name:</strong> Bank Central Asia (BCA)</p>
-                                <p><strong>Account Number:</strong> 1234567890</p>
-                                <p><strong>Account Name:</strong> Bytebalok</p>
+                                <p><strong>Bank Name:</strong> <span id="bankName">-</span></p>
+                                <p><strong>Account Number:</strong> <span id="accountNumber">-</span></p>
+                                <p><strong>Account Name:</strong> <span id="accountName">-</span></p>
+                                <p><strong>Reference:</strong> <span id="referenceNumber">-</span></p>
                                 <p><strong>Amount:</strong> <span id="transferAmount">Rp 0</span></p>
+                                <p id="transferInstructions" style="color: var(--text-light);"></p>
                             </div>
                         </div>
                         <p class="payment-note">Please transfer the exact amount and keep your receipt.</p>
                     </div>
 
-                    <!-- COD Payment -->
-                    <div class="payment-cod" id="codPayment" style="display: none;">
-                        <h3>Cash on Delivery</h3>
-                        <p>Please prepare the exact amount when receiving your order.</p>
-                        <p><strong>Amount to pay:</strong> <span id="codAmount">Rp 0</span></p>
-                    </div>
+                    
 
                     <div class="payment-actions">
                         <button class="btn btn-success" id="shareWhatsAppBtn">
@@ -252,6 +239,34 @@
             </div>
         </div>
     </main>
+
+    <!-- Track Order Modal -->
+    <div class="modal" id="trackOrderModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Track Your Order</h3>
+                <button class="modal-close" id="closeTrackModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="trackOrderForm">
+                    <div class="form-group">
+                        <label for="trackOrderNumber">Order Number</label>
+                        <input type="text" id="trackOrderNumber" placeholder="ORD20240101XXXX" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="trackEmail">Email</label>
+                        <input type="email" id="trackEmail" placeholder="your@email.com" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search"></i>
+                        Track Order
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
 
     <!-- Footer -->
     <footer class="shop-footer">
@@ -310,29 +325,45 @@
             const printInvoiceBtn = document.getElementById('printInvoiceBtn');
             if (printInvoiceBtn) {
                 printInvoiceBtn.addEventListener('click', () => {
-                    const orderNumber = document.getElementById('orderNumber')?.textContent || 'N/A';
-                    const cart = ShopCart.getCart();
-                    const subtotal = ShopCart.getTotal();
-                    const tax = ShopCart.getTax();
-                    const discount = PromoCodeManager.calculateDiscount(subtotal);
-                    
-                    const orderData = {
-                        orderNumber: orderNumber,
-                        customerName: document.getElementById('customerName')?.value || 'N/A',
-                        customerEmail: document.getElementById('customerEmail')?.value || 'N/A',
-                        customerPhone: document.getElementById('customerPhone')?.value || 'N/A',
-                        customerAddress: document.getElementById('customerAddress')?.value || 'N/A',
-                        items: cart,
-                        subtotal: subtotal,
-                        tax: tax,
-                        shipping: 0,
-                        discount: discount,
-                        total: subtotal + tax - discount,
-                        paymentMethod: document.querySelector('input[name="payment_method"]:checked')?.value || 'N/A',
-                        paymentStatus: 'Pending'
+                    // Gunakan data order dari API yang disimpan saat checkout berhasil,
+                    // karena keranjang telah dibersihkan sehingga tidak ada item jika memakai ShopCart.
+                    const order = ShopCheckout.currentOrderData;
+                    if (!order) {
+                        alert('Order tidak ditemukan untuk dicetak. Silakan lakukan checkout terlebih dahulu.');
+                        return;
+                    }
+
+                    // Petakan item ke format yang dipakai oleh template invoice
+                    const items = (order.items || []).map((it) => ({
+                        name: it.product_name || it.name || 'Item',
+                        quantity: parseInt(it.quantity) || 1,
+                        price: parseFloat(it.unit_price) || 0
+                    }));
+
+                    // Pastikan angka yang dibutuhkan selalu terisi
+                    const subtotal = Number(order.subtotal) || items.reduce((s, i) => s + (i.price * i.quantity), 0);
+                    const tax = Number(order.tax_amount) || 0;
+                    const shipping = Number(order.shipping_amount) || 0;
+                    const discount = Number(order.discount_amount) || 0;
+                    const total = Number(order.total_amount) || Math.max(subtotal - discount, 0) + tax + shipping;
+
+                    const invoiceData = {
+                        orderNumber: order.order_number || (document.getElementById('orderNumber')?.textContent || 'N/A'),
+                        customerName: order.customer_name || (document.getElementById('customerName')?.value || 'N/A'),
+                        customerEmail: order.customer_email || (document.getElementById('customerEmail')?.value || 'N/A'),
+                        customerPhone: order.customer_phone || (document.getElementById('customerPhone')?.value || 'N/A'),
+                        customerAddress: order.customer_address || (document.getElementById('customerAddress')?.value || 'N/A'),
+                        items,
+                        subtotal,
+                        tax,
+                        shipping,
+                        discount,
+                        total,
+                        paymentMethod: order.payment_method || (document.querySelector('input[name="payment_method"]:checked')?.value || 'N/A'),
+                        paymentStatus: order.payment_status || 'Pending'
                     };
-                    
-                    PrintInvoice.printOrder(orderData);
+
+                    PrintInvoice.printOrder(invoiceData);
                 });
             }
         });

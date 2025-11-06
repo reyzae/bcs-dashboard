@@ -4,19 +4,28 @@
  * Routes dashboard-specific API requests to appropriate controllers
  */
 
-// TEMPORARY: Enable error display for debugging
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
+// Error reporting based on environment
+$isDebug = ($_ENV['APP_DEBUG'] ?? 'false') === 'true';
+if ($isDebug) {
+    error_reporting(E_ALL);
+    ini_set('display_errors', 1);
+    ini_set('display_startup_errors', 1);
+} else {
+    error_reporting(0);
+    ini_set('display_errors', 0);
+    ini_set('display_startup_errors', 0);
+}
 
 // Load bootstrap
 require_once __DIR__ . '/bootstrap.php';
 require_once __DIR__ . '/../app/helpers/functions.php';
 require_once __DIR__ . '/../app/helpers/SecurityMiddleware.php';
 
-// Set JSON header
+// Set JSON header and CORS headers (align with api.php)
 header('Content-Type: application/json');
+header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, X-CSRF-Token');
+header('Access-Control-Allow-Credentials: true');
 
 // Handle CORS for development
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
@@ -25,11 +34,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 // Apply security middleware
-// RELAXED rate limit for development (1000 requests per minute)
-// Change to 100 for production
-SecurityMiddleware::rateLimit(1000, 60);
+// Production: 100 requests/minute, Development: 1000 requests/minute
+$isProduction = ($_ENV['APP_ENV'] ?? 'development') === 'production';
+$rateLimit = $isProduction ? 100 : 1000;
+SecurityMiddleware::rateLimit($rateLimit, 60);
 // DISABLED for development - causing 403 errors with localhost:3000
 // SecurityMiddleware::validateOrigin();
+
+// Enforce CSRF for mutating requests in production
+if ($isProduction) {
+    $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+    if (in_array($method, ['POST', 'PUT', 'PATCH', 'DELETE'])) {
+        SecurityMiddleware::checkCsrfToken();
+    }
+}
 
 // Check authentication
 if (!isLoggedIn()) {

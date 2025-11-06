@@ -16,6 +16,7 @@ class POSManager {
         this.discountRate = 0;
         this.barcodeBuffer = '';
         this.barcodeTimeout = null;
+        this.productCardEventsSetup = false; // Flag to prevent duplicate event listeners
         
         this.init();
     }
@@ -26,16 +27,20 @@ class POSManager {
         // Load cart from localStorage backup
         this.loadCartFromStorage();
         
+        // Setup event listeners first (including product card events)
+        // Setup product card events immediately - they use document-level delegation
+        this.setupProductCardEvents();
+        this.setupEventListeners();
+        this.setupKeyboardShortcuts();
+        this.setupCustomerEventListeners();
+        
         // Load data
         await this.loadTaxRate(); // Load tax rate from settings
         await this.loadProducts();
         await this.loadCategories();
         await this.loadQuickStats();
         
-        // Setup
-        this.setupEventListeners();
-        this.setupKeyboardShortcuts();
-        this.setupCustomerEventListeners();
+        // Update cart display
         this.updateCartDisplay();
         
         // Auto-save cart every 30 seconds
@@ -90,7 +95,7 @@ class POSManager {
         
         try {
             console.log('📦 Loading products...');
-            console.log('📍 API URL: ../api_dashboard.php?action=pos&method=getProducts');
+            console.log('📍 API URL: ../api.php?controller=pos&action=getProducts');
             
             // Show loading state
             grid.innerHTML = `
@@ -100,12 +105,21 @@ class POSManager {
                 </div>
             `;
             
-            const response = await app.apiCall('../api_dashboard.php?action=pos&method=getProducts');
+            const response = await app.apiCall('../api.php?controller=pos&action=getProducts');
             
             console.log('📦 Products Response:', response);
             
             if (response && response.success && response.data) {
-                this.products = response.data;
+                // Normalize product data types to avoid ID mismatch issues
+                const rawProducts = Array.isArray(response.data.products) ? response.data.products : response.data;
+                this.products = (rawProducts || []).map(p => ({
+                    ...p,
+                    // Ensure numeric comparisons work consistently
+                    id: (p && p.id !== undefined) ? parseInt(p.id) : p.id,
+                    stock_quantity: (p && p.stock_quantity !== undefined) ? parseInt(p.stock_quantity) : 0,
+                    min_stock_level: (p && p.min_stock_level !== undefined) ? parseInt(p.min_stock_level) : 0,
+                    price: (p && p.price !== undefined) ? parseFloat(p.price) : 0
+                }));
                 this.renderProducts();
                 console.log(`✅ Loaded ${this.products.length} products`);
             } else {
@@ -162,7 +176,7 @@ class POSManager {
 
     async loadCategories() {
         try {
-            const response = await app.apiCall('../api_dashboard.php?action=pos&method=getCategories');
+            const response = await app.apiCall('../api.php?controller=pos&action=getCategories');
             if (response.success) {
                 this.categories = response.data;
                 this.renderCategories();
@@ -174,7 +188,7 @@ class POSManager {
 
     async loadQuickStats() {
         try {
-            const response = await app.apiCall('../api_dashboard.php?action=pos&method=getStats');
+            const response = await app.apiCall('../api.php?controller=pos&action=getStats');
             if (response.success && response.data) {
                 const stats = response.data;
                 
@@ -209,10 +223,24 @@ class POSManager {
             return;
         }
 
+        // Format currency helper
+        const formatPrice = (price) => {
+            try {
+                if (window.app && typeof window.app.formatCurrency === 'function') {
+                    return window.app.formatCurrency(price);
+                }
+                // Fallback
+                return 'Rp ' + new Intl.NumberFormat('id-ID').format(price);
+            } catch (e) {
+                return 'Rp ' + price.toLocaleString('id-ID');
+            }
+        };
+
         grid.innerHTML = products.map(product => `
             <div class="product-card ${product.stock_quantity <= 0 ? 'out-of-stock' : ''}" 
-                 data-product-id="${product.id}" 
-                 onclick="posManager.openProductModal(${product.id})">
+                 data-product-id="${product.id}"
+                 style="cursor: pointer;"
+                 onclick="console.log('CLICKED Product ID:', ${product.id}); if(window.posManager && window.posManager.handleProductClick){ window.posManager.handleProductClick(${product.id}); } else { console.error('posManager not ready:', window.posManager); alert('System sedang memuat, silakan refresh halaman'); }">
                 <div class="product-image">
                     ${product.image ? 
                         `<img src="../${product.image}" alt="${product.name}" onerror="this.style.display='none'; this.parentElement.innerHTML='<i class=\\'fas fa-box\\'></i>';">` : 
@@ -221,13 +249,203 @@ class POSManager {
                 </div>
                 <h4 class="product-name">${product.name}</h4>
                 <p class="product-sku">SKU: ${product.sku}</p>
-                <p class="product-price">${app.formatCurrency(product.price)}</p>
+                <p class="product-price">${formatPrice(product.price)}</p>
                 <p class="product-stock ${product.stock_quantity <= product.min_stock_level ? 'low-stock' : ''} ${product.stock_quantity <= 0 ? 'out-of-stock' : ''}">
                     Stock: ${product.stock_quantity} ${product.unit || 'pcs'}
                 </p>
                 ${product.stock_quantity <= 0 ? '<div class="out-of-stock-badge">Out of Stock</div>' : ''}
             </div>
         `).join('');
+        
+        // Setup click events directly on product cards after rendering (with error handling)
+        try {
+            setTimeout(() => {
+                this.attachProductCardClickEvents();
+            }, 100); // Small delay to ensure DOM is ready
+        } catch (error) {
+            console.error('❌ Error in renderProducts after attachProductCardClickEvents:', error);
+        }
+    }
+    
+    // Handler untuk inline onclick (fallback)
+    handleProductClick(productId) {
+        console.log('🖱️ ========== handleProductClick CALLED ==========');
+        console.log('🖱️ Product ID:', productId);
+        console.log('🖱️ posManager:', this);
+        console.log('🖱️ window.posManager:', window.posManager);
+        console.log('🖱️ this.products:', this.products);
+        
+        if (!productId || isNaN(productId)) {
+            console.error('❌ Invalid product ID:', productId);
+            alert('Invalid product ID: ' + productId);
+            return;
+        }
+        
+        // Check if product is out of stock
+        const product = this.products.find(p => p.id === productId);
+        console.log('🖱️ Found product:', product);
+        
+        if (!product) {
+            console.error('❌ Product not found for ID:', productId);
+            alert('Product tidak ditemukan! ID: ' + productId);
+            return;
+        }
+        
+        if (product.stock_quantity <= 0) {
+            console.log('⚠️ Product is out of stock');
+            if (window.app && typeof window.app.showToast === 'function') {
+                window.app.showToast('Product is out of stock', 'warning');
+            } else {
+                alert('Product habis stok');
+            }
+            return;
+        }
+        
+        console.log('📦 Opening modal for product ID:', productId);
+        console.log('📦 Product name:', product.name);
+        
+        try {
+            if (typeof this.openProductModal === 'function') {
+                this.openProductModal(productId);
+                console.log('✅ Modal opened for product:', productId);
+            } else {
+                console.error('❌ openProductModal is not a function!');
+                console.error('❌ this.openProductModal:', this.openProductModal);
+                alert('Error: openProductModal tidak tersedia');
+            }
+        } catch (error) {
+            console.error('❌ Error opening modal:', error);
+            console.error('❌ Error stack:', error.stack);
+            alert('Error: ' + error.message);
+            if (window.app && typeof window.app.showToast === 'function') {
+                window.app.showToast('Terjadi kesalahan', 'error');
+            }
+        }
+    }
+    
+    attachProductCardClickEvents() {
+        try {
+            console.log('🔧 Starting attachProductCardClickEvents...');
+            
+            const grid = document.getElementById('productsGrid');
+            if (!grid) {
+                console.warn('⚠️ Products grid not found for attaching click events');
+                return;
+            }
+            
+            const productCards = Array.from(grid.querySelectorAll('.product-card'));
+            console.log(`🔧 Found ${productCards.length} product cards to attach events...`);
+            
+            if (productCards.length === 0) {
+                console.warn('⚠️ No product cards found');
+                return;
+            }
+            
+            const self = this;
+            let attachedCount = 0;
+            
+            productCards.forEach((card, index) => {
+                try {
+                    // Attach click event directly (additional to inline onclick)
+                    card.addEventListener('click', function(e) {
+                        console.log(`🖱️ Product card #${index + 1} clicked via addEventListener:`, card);
+                        
+                        // Don't handle if out of stock
+                        if (card.classList.contains('out-of-stock')) {
+                            console.log('⚠️ Product is out of stock');
+                            if (window.app && typeof window.app.showToast === 'function') {
+                                window.app.showToast('Product is out of stock', 'warning');
+                            }
+                            return;
+                        }
+                        
+                        // Get product ID
+                        const productId = parseInt(card.getAttribute('data-product-id'));
+                        if (!productId || isNaN(productId)) {
+                            console.error('❌ Invalid product ID:', card.getAttribute('data-product-id'));
+                            return;
+                        }
+                        
+                        console.log('📦 Opening modal for product ID:', productId);
+                        
+                        // Try to open modal
+                        const manager = self || window.posManager;
+                        if (manager && typeof manager.openProductModal === 'function') {
+                            try {
+                                manager.openProductModal(productId);
+                                console.log('✅ Modal opened for product:', productId);
+                            } catch (error) {
+                                console.error('❌ Error opening modal:', error);
+                                console.error('Error stack:', error.stack);
+                                if (window.app && typeof window.app.showToast === 'function') {
+                                    window.app.showToast('Terjadi kesalahan', 'error');
+                                }
+                            }
+                        } else {
+                            console.error('❌ posManager not available. self:', self, 'window.posManager:', window.posManager);
+                        }
+                    });
+                    attachedCount++;
+                } catch (error) {
+                    console.error(`❌ Error attaching event to card ${index + 1}:`, error);
+                }
+            });
+            
+            console.log(`✅ Click events attached to ${attachedCount} of ${productCards.length} product cards`);
+        } catch (error) {
+            console.error('❌ Fatal error in attachProductCardClickEvents:', error);
+            console.error('Error stack:', error.stack);
+        }
+    }
+    
+    setupProductCardEvents() {
+        // This method is kept for backward compatibility but now we attach events directly in renderProducts
+        // Using document-level delegation as backup
+        if (this.productCardEventsSetup) {
+            return;
+        }
+        
+        console.log('🔧 Setting up document-level product card click events (backup)...');
+        
+        const self = this;
+        
+        // Document-level event delegation as backup
+        const clickHandler = function(e) {
+            const grid = document.getElementById('productsGrid');
+            if (!grid || !grid.contains(e.target)) {
+                return;
+            }
+            
+            const productCard = e.target.closest('.product-card');
+            if (!productCard) return;
+            
+            // Only handle if direct event listener didn't work
+            const productId = parseInt(productCard.getAttribute('data-product-id'));
+            if (!productId || isNaN(productId)) return;
+            
+            console.log('🖱️ Product card clicked (document delegation):', productId);
+            
+            if (productCard.classList.contains('out-of-stock')) {
+                if (window.app && typeof window.app.showToast === 'function') {
+                    window.app.showToast('Product is out of stock', 'warning');
+                }
+                return;
+            }
+            
+            const manager = self || window.posManager;
+            if (manager && typeof manager.openProductModal === 'function') {
+                try {
+                    manager.openProductModal(productId);
+                } catch (error) {
+                    console.error('❌ Error opening modal:', error);
+                }
+            }
+        };
+        
+        document.addEventListener('click', clickHandler, { passive: true, capture: false });
+        this._productCardClickHandler = clickHandler;
+        this.productCardEventsSetup = true;
+        console.log('✅ Document-level click events setup complete (backup)');
     }
 
     renderCategories() {
@@ -517,6 +735,8 @@ class POSManager {
                 this.filterByCategory(btn.dataset.category);
             }
         });
+        
+        // Product card clicks - already setup in init() using document-level delegation
 
         // Payment methods
         document.addEventListener('click', (e) => {
@@ -739,6 +959,9 @@ class POSManager {
                 payment_reference: this.paymentMethod !== 'cash' ? `${this.paymentMethod.toUpperCase()}-${Date.now()}` : null,
                 tax_percentage: this.taxRate,
                 discount_percentage: this.discountRate,
+                // Capture cash values for cash payments
+                cash_received: this.paymentMethod === 'cash' ? paymentAmount : null,
+                cash_change: this.paymentMethod === 'cash' ? Math.max(0, paymentAmount - total) : null,
                 items: this.cart.map(item => ({
                     product_id: parseInt(item.product_id),
                     quantity: parseInt(item.quantity),
@@ -750,7 +973,7 @@ class POSManager {
             console.log('📤 Sending transaction data:', transactionData);
             console.log('👤 Selected customer:', this.selectedCustomer);
 
-            const response = await app.apiCall('../api_dashboard.php?action=pos&method=createTransaction', {
+            const response = await app.apiCall('../api.php?controller=pos&action=createTransaction', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -1113,7 +1336,7 @@ class POSManager {
         }
 
         try {
-            const response = await app.apiCall(`../api_dashboard.php?action=pos&method=searchCustomers&q=${encodeURIComponent(query)}`);
+            const response = await app.apiCall(`../api.php?controller=pos&action=searchCustomers&q=${encodeURIComponent(query)}`);
             if (response.success && response.data && response.data.length > 0) {
                 this.showCustomerDropdown(response.data);
             } else {
@@ -1371,7 +1594,7 @@ class POSManager {
         if (notes === null) return; // User cancelled
 
         try {
-            const response = await app.apiCall('../api_dashboard.php?action=pos&method=holdTransaction', {
+            const response = await app.apiCall('../api.php?controller=pos&action=holdTransaction', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'

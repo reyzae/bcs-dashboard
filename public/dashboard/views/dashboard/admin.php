@@ -266,7 +266,7 @@ async function loadAdminDashboardData(period = 'month', customRange = null) {
         console.log('🔄 Loading dashboard data for period:', period, customRange);
         
         // Build API URL dengan parameter periode
-        let apiUrl = '../api_dashboard.php?action=dashboard&method=stats';
+        let apiUrl = '/api.php?controller=dashboard&action=stats';
         
         if (customRange && customRange.from && customRange.to) {
             // Custom date range
@@ -464,7 +464,7 @@ async function loadSalesChart(days) {
         start.setDate(start.getDate() - Number(days));
         const startDate = start.toISOString().split('T')[0];
 
-        const url = `../api.php?controller=transaction&action=daily-sales&start_date=${startDate}&end_date=${endDate}`;
+        const url = `/api.php?controller=transaction&action=daily-sales&start_date=${startDate}&end_date=${endDate}`;
         const response = await fetch(url);
         const data = await response.json();
         if (data.success) {
@@ -477,7 +477,7 @@ async function loadSalesChart(days) {
 
 async function loadPaymentMethodsChart(period = null, customRange = null) {
     try {
-        const response = await fetch(`../api_dashboard.php?action=dashboard&method=paymentMethods`);
+        const response = await fetch(`/api.php?controller=dashboard&action=paymentMethods`);
         const data = await response.json();
         if (data.success) {
             renderPaymentChart(data.data);
@@ -489,7 +489,7 @@ async function loadPaymentMethodsChart(period = null, customRange = null) {
 
 async function loadTopProducts(period = null, customRange = null) {
     try {
-        const response = await fetch('../api_dashboard.php?action=dashboard&method=topProducts&limit=5');
+        const response = await fetch('/api.php?controller=dashboard&action=topProducts&limit=5');
     const data = await response.json();
     
     if (data.success && data.data.products.length > 0) {
@@ -521,7 +521,7 @@ async function loadTopProducts(period = null, customRange = null) {
 
 async function loadRecentActivity() {
     try {
-        const response = await fetch('../api_dashboard.php?action=dashboard&method=recentActivity&limit=10');
+        const response = await fetch('/api.php?controller=dashboard&action=recentActivity&limit=10');
     const data = await response.json();
     
     if (data.success && data.data.activities.length > 0) {
@@ -548,7 +548,7 @@ async function loadRecentActivity() {
 
 async function loadRecentTransactions() {
     try {
-        const response = await fetch('../api_dashboard.php?action=transactions&method=recent&limit=10');
+        const response = await fetch('/api.php?controller=transaction&action=list&limit=10');
     const data = await response.json();
     
     if (data.success && data.data.transactions.length > 0) {
@@ -585,7 +585,7 @@ async function loadRecentTransactions() {
 
 async function loadLowStockProducts() {
     try {
-        const response = await fetch('../api_dashboard.php?action=products&method=lowStock');
+        const response = await fetch('/api.php?controller=product&action=getLowStock');
     const data = await response.json();
     
     if (data.success && data.data.products.length > 0) {
@@ -614,7 +614,7 @@ async function loadLowStockProducts() {
                             </td>
                             <td>${product.min_stock_level}</td>
                             <td>
-                                <span class="text-warning">${product.quantity_needed}</span>
+                                <span class="text-warning">${Math.max(0, (product.min_stock_level || 0) - (product.stock_quantity || 0))}</span>
                             </td>
                             <td>
                                 <a href="products.php?id=${product.id}&action=restock" class="btn btn-sm btn-warning">

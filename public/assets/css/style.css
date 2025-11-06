@@ -350,6 +350,14 @@ body {
     color: var(--primary-color);
 }
 
+/* Global logo image styling */
+.logo-img {
+    height: 24px;
+    width: auto;
+    display: inline-block;
+    vertical-align: middle;
+}
+
 .sidebar-logo h1 {
     font-size: 1.25rem;
     font-weight: 700;

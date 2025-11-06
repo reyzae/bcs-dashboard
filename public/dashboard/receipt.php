@@ -70,8 +70,13 @@ $user_name = $_SESSION['user_name'] ?? 'User';
         }
         
         .receipt-header .company-logo {
-            font-size: 48px;
             margin-bottom: 10px;
+        }
+        .receipt-header .company-logo .logo-img {
+            height: 48px;
+            width: auto;
+            display: inline-block;
+            vertical-align: middle;
         }
         
         .receipt-header h1 {
@@ -367,14 +372,14 @@ $user_name = $_SESSION['user_name'] ?? 'User';
     </div>
     
     <!-- Receipt Container -->
-    <div class="receipt-container">
-        <div class="receipt-header">
-            <div class="company-logo">
-                <i class="fas fa-chart-line"></i>
+        <div class="receipt-container">
+            <div class="receipt-header">
+                <div class="company-logo">
+                <img src="../assets/img/logo.svg" alt="Bytebalok" class="logo-img">
+                </div>
+                <h1>Bytebalok</h1>
+                <p>Business Management System</p>
             </div>
-            <h1>Bytebalok</h1>
-            <p>Business Management System</p>
-        </div>
         
         <div class="receipt-body" id="receiptBody">
             <!-- Loading State -->
@@ -439,14 +444,32 @@ $user_name = $_SESSION['user_name'] ?? 'User';
     </template>
     
     <script>
-        // Format currency helper
+        // Normalize number helper (handles strings like "28.000", "28,000", "Rp 28.000")
+        const toNumber = (val) => {
+            if (val === null || val === undefined) return 0;
+            if (typeof val === 'number') return isFinite(val) ? val : 0;
+            if (typeof val === 'string') {
+                // Remove non-digit characters except dot/minus
+                const cleaned = val
+                    .replace(/Rp/gi, '')
+                    .replace(/\s+/g, '')
+                    .replace(/[,]/g, '.')
+                    .replace(/[^0-9.-]/g, '');
+                const num = Number(cleaned);
+                return isFinite(num) ? num : 0;
+            }
+            try { return Number(val) || 0; } catch { return 0; }
+        };
+
+        // Format currency helper (always formats numbers reliably)
         const formatCurrency = (amount) => {
+            const num = toNumber(amount);
             return new Intl.NumberFormat('id-ID', {
                 style: 'currency',
                 currency: 'IDR',
                 minimumFractionDigits: 0,
                 maximumFractionDigits: 0,
-            }).format(amount || 0);
+            }).format(num);
         };
 
         // Format date helper
@@ -535,20 +558,42 @@ $user_name = $_SESSION['user_name'] ?? 'User';
                     <div class="receipt-item">
                         <div class="item-details">
                             <div class="item-name">${item.product_name || 'Unknown Product'}</div>
-                            <div class="item-quantity">${item.quantity || 0} × ${formatCurrency(item.unit_price || 0)}</div>
+                            <div class="item-quantity">${toNumber(item.quantity) || 0} × ${formatCurrency(item.unit_price)}</div>
                         </div>
-                        <div class="item-price">${formatCurrency(item.total_price || 0)}</div>
+                        <div class="item-price">${formatCurrency(item.total_price)}</div>
                     </div>
                 `).join('');
             } else {
                 itemsContainer.innerHTML = '<div style="text-align: center; color: #9ca3af; padding: 20px;">No items found</div>';
             }
             
+            // Compute summary with fallbacks if API returns strings or missing values
+            let subtotal = toNumber(transaction.subtotal);
+            let discount = toNumber(transaction.discount_amount);
+            let tax = toNumber(transaction.tax_amount);
+            let total = toNumber(transaction.total_amount);
+
+            if ((!subtotal || subtotal <= 0) && Array.isArray(transaction.items)) {
+                // Recompute subtotal from items in case API sent strings or zeros
+                subtotal = transaction.items.reduce((sum, it) => {
+                    const lineTotal = toNumber(it.total_price);
+                    const qty = toNumber(it.quantity);
+                    const unit = toNumber(it.unit_price);
+                    return sum + (lineTotal || (qty * unit));
+                }, 0);
+            }
+            // If total missing, recompute using discount and tax
+            if (!total || total <= 0) {
+                const taxable = Math.max(subtotal - discount, 0);
+                tax = tax || Math.round(taxable * (toNumber(transaction.tax_percentage) || 10) / 100);
+                total = taxable + tax;
+            }
+
             // Fill summary
-            clone.getElementById('subtotal').textContent = formatCurrency(transaction.subtotal || 0);
-            clone.getElementById('discount').textContent = formatCurrency(transaction.discount_amount || 0);
-            clone.getElementById('tax').textContent = formatCurrency(transaction.tax_amount || 0);
-            clone.getElementById('total').textContent = formatCurrency(transaction.total_amount || 0);
+            clone.getElementById('subtotal').textContent = formatCurrency(subtotal);
+            clone.getElementById('discount').textContent = formatCurrency(discount);
+            clone.getElementById('tax').textContent = formatCurrency(tax);
+            clone.getElementById('total').textContent = formatCurrency(total);
             
             // Payment method
             if (transaction.payment_method) {

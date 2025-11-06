@@ -353,6 +353,106 @@ require_once 'includes/header.php';
                                         </div>
                                     </div>
                                 </div>
+
+                                <!-- Shop Tax Settings -->
+                                <div style="margin-top: 1.5rem;">
+                                    <h5 style="font-size: 0.95rem; font-weight: 600; color: #374151; margin-bottom: 0.75rem;">
+                                        <i class="fas fa-store" style="color: #10b981; margin-right: 0.5rem;"></i>
+                                        Shop Tax Configuration
+                                    </h5>
+                                    <div style="background: #f9fafb; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                                        <label class="toggle-switch-label" style="display: flex; align-items: center; justify-content: space-between; cursor: pointer;">
+                                            <div>
+                                                <div style="font-weight: 600; color: #111827; margin-bottom: 0.25rem;">
+                                                    Enable Tax for Shop
+                                                </div>
+                                                <div style="font-size: 0.875rem; color: #6b7280;">Controls tax calculation visible on /shop (public)</div>
+                                            </div>
+                                            <label class="toggle-switch">
+                                                <input type="checkbox" id="enableTaxShop" onchange="settingsManager.toggleShopTaxFields()">
+                                                <span class="toggle-slider"></span>
+                                            </label>
+                                        </label>
+                                    </div>
+                                    <div id="shopTaxConfigSection" style="display: none;">
+                                        <div class="form-row" style="display: grid; grid-template-columns: 1fr; gap: 1rem;">
+                                            <div class="form-group">
+                                                <label for="taxRateShop" class="form-label">
+                                                    <i class="fas fa-percentage" style="color: #10b981;"></i>
+                                                    Shop Tax Rate (%)
+                                                </label>
+                                                <input type="number" id="taxRateShop" class="form-control" value="11" min="0" max="100" step="0.01" placeholder="e.g., 11 for PPN 11% on Shop">
+                                                <small style="display: block; margin-top: 0.5rem; color: #6b7280; font-size: 0.75rem;">
+                                                    This rate applies only to public Shop pages.
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Bank Transfer Settings -->
+                                <div style="margin-top: 1.5rem;">
+                                    <h5 style="font-size: 0.95rem; font-weight: 600; color: #374151; margin-bottom: 0.75rem;">
+                                        <i class="fas fa-university" style="color: #3b82f6; margin-right: 0.5rem;"></i>
+                                        Bank Transfer Accounts
+                                    </h5>
+                                    <div style="background: #f9fafb; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                                        <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                            <div class="form-group">
+                                                <label for="bankDefault" class="form-label">
+                                                    <i class="fas fa-star" style="color: #f59e0b;"></i>
+                                                    Default Bank for Transfer
+                                                </label>
+                                                <select id="bankDefault" class="form-control">
+                                                    <option value="bca">BCA</option>
+                                                    <option value="mandiri">Mandiri</option>
+                                                    <option value="bni">BNI</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                                        <div class="form-group" style="background: #f9fafb; padding: 1rem; border-radius: 8px;">
+                                            <label class="form-label"><i class="fas fa-building" style="color: #2563eb;"></i> BCA</label>
+                                            <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                                                <div>
+                                                    <label for="bankBcaName" class="form-label">Account Name</label>
+                                                    <input type="text" id="bankBcaName" class="form-control" placeholder="Nama pemilik rekening BCA">
+                                                </div>
+                                                <div>
+                                                    <label for="bankBcaAccount" class="form-label">Account Number</label>
+                                                    <input type="text" id="bankBcaAccount" class="form-control" placeholder="Nomor rekening BCA">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="form-group" style="background: #f9fafb; padding: 1rem; border-radius: 8px;">
+                                            <label class="form-label"><i class="fas fa-building" style="color: #2563eb;"></i> Mandiri</label>
+                                            <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                                                <div>
+                                                    <label for="bankMandiriName" class="form-label">Account Name</label>
+                                                    <input type="text" id="bankMandiriName" class="form-control" placeholder="Nama pemilik rekening Mandiri">
+                                                </div>
+                                                <div>
+                                                    <label for="bankMandiriAccount" class="form-label">Account Number</label>
+                                                    <input type="text" id="bankMandiriAccount" class="form-control" placeholder="Nomor rekening Mandiri">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="form-group" style="background: #f9fafb; padding: 1rem; border-radius: 8px;">
+                                            <label class="form-label"><i class="fas fa-building" style="color: #2563eb;"></i> BNI</label>
+                                            <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                                                <div>
+                                                    <label for="bankBniName" class="form-label">Account Name</label>
+                                                    <input type="text" id="bankBniName" class="form-control" placeholder="Nama pemilik rekening BNI">
+                                                </div>
+                                                <div>
+                                                    <label for="bankBniAccount" class="form-label">Account Number</label>
+                                                    <input type="text" id="bankBniAccount" class="form-control" placeholder="Nomor rekening BNI">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                     </div>
 
                             <div class="form-actions" style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid #e5e7eb; display: flex; justify-content: flex-end; gap: 0.75rem;">
@@ -1257,6 +1357,22 @@ const settingsManager = {
         }
         if (settings.tax_rate !== undefined) this.setInputValue('taxRate', settings.tax_rate);
         if (settings.tax_number) this.setInputValue('taxNumber', settings.tax_number);
+
+        // Shop Tax Settings
+        if (settings.enable_tax_shop !== undefined) {
+            this.setCheckboxValue('enableTaxShop', settings.enable_tax_shop === '1');
+            this.toggleShopTaxFields();
+        }
+        if (settings.tax_rate_shop !== undefined) this.setInputValue('taxRateShop', settings.tax_rate_shop);
+
+        // Bank Transfer Settings
+        if (settings.bank_default) this.setInputValue('bankDefault', settings.bank_default);
+        if (settings.bank_bca_name) this.setInputValue('bankBcaName', settings.bank_bca_name);
+        if (settings.bank_bca_account) this.setInputValue('bankBcaAccount', settings.bank_bca_account);
+        if (settings.bank_mandiri_name) this.setInputValue('bankMandiriName', settings.bank_mandiri_name);
+        if (settings.bank_mandiri_account) this.setInputValue('bankMandiriAccount', settings.bank_mandiri_account);
+        if (settings.bank_bni_name) this.setInputValue('bankBniName', settings.bank_bni_name);
+        if (settings.bank_bni_account) this.setInputValue('bankBniAccount', settings.bank_bni_account);
         
         // POS Settings
         if (settings.enable_barcode_scanner) this.setCheckboxValue('enableBarcodeScanner', settings.enable_barcode_scanner === '1');
@@ -1308,6 +1424,15 @@ const settingsManager = {
                 taxConfigSection.style.display = 'none';
                 taxConfigSection.style.opacity = '0.5';
             }
+        }
+    },
+
+    toggleShopTaxFields() {
+        const enableTaxShop = document.getElementById('enableTaxShop');
+        const shopTaxConfigSection = document.getElementById('shopTaxConfigSection');
+        if (enableTaxShop && shopTaxConfigSection) {
+            shopTaxConfigSection.style.display = enableTaxShop.checked ? 'block' : 'none';
+            shopTaxConfigSection.style.opacity = enableTaxShop.checked ? '1' : '0.5';
         }
     },
     
@@ -1476,6 +1601,16 @@ const settingsManager = {
                 const enableTax = document.getElementById('enableTax');
                 const taxRate = document.getElementById('taxRate');
                 const taxNumber = document.getElementById('taxNumber');
+                const enableTaxShop = document.getElementById('enableTaxShop');
+                const taxRateShop = document.getElementById('taxRateShop');
+                // Bank transfer settings
+                const bankDefault = document.getElementById('bankDefault');
+                const bankBcaName = document.getElementById('bankBcaName');
+                const bankBcaAccount = document.getElementById('bankBcaAccount');
+                const bankMandiriName = document.getElementById('bankMandiriName');
+                const bankMandiriAccount = document.getElementById('bankMandiriAccount');
+                const bankBniName = document.getElementById('bankBniName');
+                const bankBniAccount = document.getElementById('bankBniAccount');
                 
                 if (companyName) data.company_name = companyName.value;
                 if (companyPhone) data.company_phone = companyPhone.value;
@@ -1488,6 +1623,16 @@ const settingsManager = {
                 if (enableTax) data.enable_tax = enableTax.checked ? '1' : '0';
                 if (taxRate) data.tax_rate = taxRate.value;
                 if (taxNumber) data.tax_number = taxNumber.value;
+                if (enableTaxShop) data.enable_tax_shop = enableTaxShop.checked ? '1' : '0';
+                if (taxRateShop) data.tax_rate_shop = taxRateShop.value;
+                // Bank transfer settings
+                if (bankDefault) data.bank_default = bankDefault.value;
+                if (bankBcaName) data.bank_bca_name = bankBcaName.value;
+                if (bankBcaAccount) data.bank_bca_account = bankBcaAccount.value;
+                if (bankMandiriName) data.bank_mandiri_name = bankMandiriName.value;
+                if (bankMandiriAccount) data.bank_mandiri_account = bankMandiriAccount.value;
+                if (bankBniName) data.bank_bni_name = bankBniName.value;
+                if (bankBniAccount) data.bank_bni_account = bankBniAccount.value;
                 break;
                 
             case 'pos':

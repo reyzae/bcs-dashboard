@@ -1,0 +1,37 @@
+# Directories & files yang tidak perlu diupload ke hosting
+
+# Tools dan PHP lokal (hanya untuk dev di Windows)
+tools/
+
+# Cache, logs, sessions, backups (akan dibuat ulang otomatis di server)
+storage/cache/
+storage/logs/
+storage/sessions/
+storage/backups/
+
+# Database dump atau file sensitif
+database.sql
+*.sql
+*.sql.gz
+
+# Repo metadata dan dokumentasi (opsional untuk hosting)
+.git/
+.gitignore
+README.md
+TROUBLESHOOTING_DATABASE.md
+LICENSE
+
+# Testing/dev-only
+tests/
+phpunit.xml*
+
+# Artefak sementara
+*.zip
+*.bak
+*.tmp
+*.swp
+
+# NOTE:
+# - Simpan folder `storage/exports/` dan `storage/uploads/` agar penulisan file berjalan.
+#   Aplikasi akan otomatis membuat jika belum ada.
+# - Jika fitur Export (Excel/PDF) dipakai, pastikan `vendor/` dari Composer ikut diupload.

@@ -41,129 +41,37 @@
     <link rel="stylesheet" href="../assets/css/style.css">
     <link rel="stylesheet" href="../assets/css/responsive.css">
     <link rel="stylesheet" href="../assets/css/shop.css">
+    <link rel="stylesheet" href="../assets/css/shop-clean.css">
 </head>
 <body>
-    <!-- Header -->
-    <header class="shop-header">
+    <!-- Clean Header -->
+    <header class="shop-header-clean">
         <div class="container">
-            <div class="header-content">
-                <div class="logo">
-                    <i class="fas fa-store"></i>
-                    <h1>Bytebalok Shop</h1>
+            <div class="header-content-clean">
+                <div class="logo-clean">
+                    <img src="../assets/img/logo.svg" alt="Bytebalok" class="logo-img">
+                    <span>Bytebalok</span>
                 </div>
                 
-                <div class="header-actions">
-                    <a href="cart.php" class="cart-button">
-                        <i class="fas fa-shopping-cart"></i>
-                        <span class="cart-count" id="cartCount">0</span>
-                    </a>
-                    <button class="track-order-btn" id="trackOrderBtn">
-                        <i class="fas fa-search"></i>
-                        Track Order
+                <div class="header-actions-clean">
+                    <button class="btn-header-icon" id="trackOrderBtn" title="Track Order">
+                        <i class="fas fa-box"></i>
                     </button>
+                    <a href="cart.php" class="cart-button-clean">
+                        <i class="fas fa-shopping-cart"></i>
+                        <span class="cart-count-clean" id="cartCount">0</span>
+                    </a>
                 </div>
             </div>
         </div>
     </header>
 
-    <!-- Promo Banner -->
-    <div class="promo-banner">
+    <!-- Minimal Hero Section -->
+    <section class="hero-minimal">
         <div class="container">
-            <div class="promo-content">
-                <i class="fas fa-birthday-cake"></i>
-                <span>🍰 <strong>Promo Spesial!</strong> Gunakan kode <code class="promo-code-highlight">KUEBALOK10</code> untuk diskon 10% pembelian pertama!</span>
-                <button class="btn-copy-code" onclick="copyPromoCode('KUEBALOK10')">
-                    <i class="fas fa-copy"></i> Salin Kode
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Hero Section -->
-    <section class="hero-section-enhanced">
-        <div class="container">
-            <div class="hero-content-enhanced">
-                <div class="hero-text">
-                    <h1 class="hero-title">Kue Balok Enak & Berkualitas</h1>
-                    <p class="hero-subtitle">Kue balok segar setiap hari, dengan berbagai varian rasa! Antar cepat, pembayaran aman, dan promo menarik!</p>
-                    <div class="hero-cta">
-                        <button class="btn-primary-large" onclick="document.getElementById('productsGrid').scrollIntoView({behavior: 'smooth'})">
-                            <i class="fas fa-birthday-cake"></i>
-                            Belanja Sekarang
-                        </button>
-                        <button class="btn-secondary-large" id="viewPromosBtn">
-                            <i class="fas fa-tags"></i>
-                            Lihat Promo
-                        </button>
-                    </div>
-                </div>
-                <div class="hero-stats">
-                    <div class="stat-item">
-                        <i class="fas fa-birthday-cake"></i>
-                        <div class="stat-text">
-                            <strong>50+</strong>
-                            <span>Varian Rasa</span>
-                        </div>
-                    </div>
-                    <div class="stat-item">
-                        <i class="fas fa-heart"></i>
-                        <div class="stat-text">
-                            <strong>2000+</strong>
-                            <span>Pelanggan Setia</span>
-                        </div>
-                    </div>
-                    <div class="stat-item">
-                        <i class="fas fa-star"></i>
-                        <div class="stat-text">
-                            <strong>4.9/5</strong>
-                            <span>Rating Terbaik</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Trust Badges -->
-    <section class="trust-section">
-        <div class="container">
-            <div class="trust-badges">
-                <div class="trust-badge">
-                    <div class="trust-icon">
-                        <i class="fas fa-clock"></i>
-                    </div>
-                    <div class="trust-text">
-                        <strong>Segar Setiap Hari</strong>
-                        <span>Dibuat fresh daily</span>
-                    </div>
-                </div>
-                <div class="trust-badge">
-                    <div class="trust-icon">
-                        <i class="fas fa-shipping-fast"></i>
-                    </div>
-                    <div class="trust-text">
-                        <strong>Antar Cepat</strong>
-                        <span>Same day delivery</span>
-                    </div>
-                </div>
-                <div class="trust-badge">
-                    <div class="trust-icon">
-                        <i class="fas fa-check-circle"></i>
-                    </div>
-                    <div class="trust-text">
-                        <strong>Higienis & Halal</strong>
-                        <span>Terjamin kehalalannya</span>
-                    </div>
-                </div>
-                <div class="trust-badge">
-                    <div class="trust-icon">
-                        <i class="fas fa-heart"></i>
-                    </div>
-                    <div class="trust-text">
-                        <strong>Resep Original</strong>
-                        <span>Rasa khas & lezat</span>
-                    </div>
-                </div>
+            <div class="hero-minimal-content">
+                <h1 class="hero-title-minimal">Kue Balok Berkualitas</h1>
+                <p class="hero-subtitle-minimal">Segar setiap hari • Antar cepat • Promo menarik</p>
             </div>
         </div>
     </section>
@@ -171,58 +79,56 @@
     <!-- Main Content -->
     <main class="main-content">
         <div class="container">
-            <!-- Quick Filters -->
-            <div class="quick-filters">
-                <button class="filter-chip active" data-filter="all">
-                    <i class="fas fa-birthday-cake"></i>
-                    Semua Kue
-                </button>
-                <button class="filter-chip" data-filter="bestseller">
-                    <i class="fas fa-crown"></i>
-                    Terlaris
-                </button>
-                <button class="filter-chip" data-filter="new">
-                    <i class="fas fa-sparkles"></i>
-                    Rasa Baru
-                </button>
-                <button class="filter-chip" data-filter="promo">
-                    <i class="fas fa-tags"></i>
-                    Promo Hari Ini
-                </button>
-                <button class="filter-chip" data-filter="hampers">
-                    <i class="fas fa-gift"></i>
-                    Paket Hampers
-                </button>
-            </div>
-
-            <!-- Enhanced Search and Filter -->
-            <div class="shop-controls-enhanced">
-                <div class="search-bar-enhanced">
+            <!-- Simplified Search & Filter Bar -->
+            <div class="search-filter-bar">
+                <div class="search-wrapper">
                     <i class="fas fa-search"></i>
-                    <input type="text" id="searchInput" placeholder="Cari kue balok... (contoh: coklat, keju, pandan)" autocomplete="off">
-                    <div class="search-suggestions" id="searchSuggestions" style="display: none;">
-                        <!-- Suggestions will appear here -->
-                    </div>
+                    <input type="text" id="searchInput" placeholder="Cari kue balok..." autocomplete="off">
+                    <div class="search-suggestions" id="searchSuggestions" style="display: none;"></div>
                 </div>
-                
-                <div class="view-options">
-                    <button class="view-btn active" data-view="grid" title="Grid View">
-                        <i class="fas fa-th"></i>
+                <div class="filter-actions">
+                    <button class="btn-filter-toggle" id="categoryToggle">
+                        <i class="fas fa-tags"></i>
+                        <span>Kategori</span>
                     </button>
-                    <button class="view-btn" data-view="list" title="List View">
-                        <i class="fas fa-list"></i>
-                    </button>
+                    <select id="sortSelect" class="sort-select-compact">
+                        <option value="name_asc">Nama A-Z</option>
+                        <option value="name_desc">Nama Z-A</option>
+                        <option value="price_asc">Harga ↑</option>
+                        <option value="price_desc">Harga ↓</option>
+                    </select>
                 </div>
             </div>
 
-            <!-- Category Cards -->
-            <div class="category-showcase" id="categoryShowcase">
-                <!-- Categories will be loaded dynamically with icons -->
+            <!-- Quick Filters -->
+            <div class="quick-filters-bar">
+                <button class="quick-filter-btn active" data-filter="all" onclick="ShopCatalog.quickFilter('all')">
+                    <i class="fas fa-th"></i> Semua
+                </button>
+                <button class="quick-filter-btn" data-filter="bestseller" onclick="ShopCatalog.quickFilter('bestseller')">
+                    <i class="fas fa-fire"></i> Terlaris
+                </button>
+                <button class="quick-filter-btn" data-filter="new" onclick="ShopCatalog.quickFilter('new')">
+                    <i class="fas fa-sparkles"></i> Baru
+                </button>
+                <button class="quick-filter-btn" data-filter="promo" onclick="ShopCatalog.quickFilter('promo')">
+                    <i class="fas fa-tag"></i> Promo
+                </button>
+            </div>
+
+            <!-- Collapsible Categories -->
+            <div class="category-section-collapsible" id="categorySection" style="display: none;">
+                <div class="category-showcase-compact" id="categoryShowcase">
+                    <!-- Categories will be loaded dynamically -->
+                </div>
             </div>
 
             <!-- Products Grid -->
-            <div class="products-section">
-                <div class="products-grid" id="productsGrid">
+            <div class="products-section-clean">
+                <div class="products-header-minimal">
+                    <span class="product-count-minimal" id="productCount">0 produk tersedia</span>
+                </div>
+                <div class="products-grid-clean" id="productsGrid">
                     <!-- Loading Skeleton -->
                     <div class="skeleton-grid" id="skeletonGrid">
                         <div class="skeleton-card">
@@ -369,9 +275,9 @@
     </div>
 
     <!-- Floating WhatsApp Button -->
-    <a href="https://wa.me/6282112345678?text=Halo%20Kue%20Balok%20Bytebalok,%20saya%20mau%20pesan..." class="floating-whatsapp" target="_blank" title="Pesan via WhatsApp">
+    <a href="https://wa.me/6285121010199?text=Halo%20Kue%20Balok%20Bytebalok,%20saya%20mau%20pesan" class="floating-whatsapp" target="_blank" title="Pesan via WhatsApp">
         <i class="fab fa-whatsapp"></i>
-        <span class="whatsapp-text">Pesan Sekarang</span>
+        <span class="whatsapp-text">Chat WA</span>
     </a>
 
     <!-- Scroll to Top Button -->

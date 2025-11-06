@@ -257,7 +257,7 @@ async function loadCashierDashboard() {
         console.log('🔄 Loading realtime cashier data...');
         
         // Load cashier stats (REALTIME)
-        const statsResponse = await fetch('../api_dashboard.php?action=dashboard&method=cashierStats');
+        const statsResponse = await fetch('../api.php?controller=dashboard&action=cashierStats');
         const statsData = await statsResponse.json();
         
         if (statsData.success) {
@@ -373,7 +373,7 @@ function updateShiftDuration() {
 
 async function loadMyRecentTransactions() {
     try {
-        const response = await fetch('../api_dashboard.php?action=transactions&method=recent&limit=10&mine=true');
+        const response = await fetch('../api.php?controller=pos&action=getRecentTransactions&limit=10');
         const data = await response.json();
         
         if (data.success && data.data && data.data.length > 0) {

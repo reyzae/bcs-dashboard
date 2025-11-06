@@ -39,7 +39,7 @@ class SystemManager {
 
     async loadOverviewStats() {
         try {
-            const response = await app.apiCall('../api_dashboard.php?action=dashboard&method=stats');
+            const response = await app.apiCall('../api.php?controller=dashboard&action=stats');
             
             if (response.success) {
                 this.renderStatsCards(response.data);
@@ -120,7 +120,7 @@ class SystemManager {
         try {
             const period = document.getElementById('salesPeriod')?.value || '30days';
             const days = period === '7days' ? 7 : period === '30days' ? 30 : 90;
-            const response = await app.apiCall(`../api_dashboard.php?action=dashboard&method=salesChart&days=${days}`);
+            const response = await app.apiCall(`../api.php?controller=dashboard&action=salesChart&days=${days}`);
             
             if (response.success) {
                 this.updateSalesChart(response.data);
@@ -209,7 +209,7 @@ class SystemManager {
     async loadTopProducts() {
         try {
             const period = document.getElementById('topProductsPeriod')?.value || '30days';
-            const response = await app.apiCall(`../api_dashboard.php?action=dashboard&method=topProducts&limit=5`);
+            const response = await app.apiCall(`../api.php?controller=dashboard&action=topProducts&limit=5`);
             
             if (response.success && response.data && response.data.products) {
                 this.renderTopProducts(response.data.products);
@@ -244,7 +244,7 @@ class SystemManager {
 
     async loadRecentTransactions() {
         try {
-            const response = await app.apiCall('../api_dashboard.php?action=transactions&method=recent&limit=10');
+            const response = await app.apiCall('../api.php?controller=pos&action=getRecentTransactions&limit=10');
             
             if (response.success && response.data && response.data.transactions) {
                 this.renderRecentTransactions(response.data.transactions);
@@ -309,7 +309,7 @@ class SystemManager {
 
     async loadLowStockProducts() {
         try {
-            const response = await app.apiCall('../api_dashboard.php?action=products&method=lowStock&limit=10');
+            const response = await app.apiCall('../api.php?controller=product&action=getLowStock&limit=10');
             
             if (response.success && response.data && response.data.products && response.data.products.length > 0) {
                 this.renderLowStockProducts(response.data.products);

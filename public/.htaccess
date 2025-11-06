@@ -1,15 +1,63 @@
-# Simple .htaccess for PHP built-in server
+# Bytebalok Dashboard - Production .htaccess
+# Document Root: public/
+
+# Default index file
 DirectoryIndex index.php
+
+# URL Rewriting (optional - for cleaner URLs)
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+    
+    # Force HTTPS (enable when SSL is ready)
+    RewriteCond %{HTTPS} !=on
+    RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+    
+    # Redirect www to non-www (or vice versa - adjust as needed)
+    # RewriteCond %{HTTP_HOST} ^www\.(.*)$ [NC]
+    # RewriteRule ^(.*)$ https://%1/$1 [R=301,L]
+</IfModule>
 
 # Security headers
 <IfModule mod_headers.c>
     Header always set X-Content-Type-Options nosniff
-    Header always set X-Frame-Options DENY
+    Header always set X-Frame-Options SAMEORIGIN
     Header always set X-XSS-Protection "1; mode=block"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    # Enforce HSTS (enable only when site is served over HTTPS)
+    Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+    
+    # Remove server information
+    Header unset Server
+    Header unset X-Powered-By
 </IfModule>
 
 # Prevent access to sensitive files
-<FilesMatch "\.(env|log|sql|md)$">
-    Order allow,deny
-    Deny from all
+<FilesMatch "\.(env|log|sql|md|json|lock)$">
+    Require all denied
 </FilesMatch>
+
+# Protect bootstrap and config files
+<FilesMatch "^(bootstrap\.php|config\.env)$">
+    Require all denied
+</FilesMatch>
+
+# Disable directory browsing
+Options -Indexes
+
+# Gzip compression for better performance
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript application/json
+</IfModule>
+
+# Browser caching (adjust expiration as needed)
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType image/jpg "access plus 1 year"
+    ExpiresByType image/jpeg "access plus 1 year"
+    ExpiresByType image/gif "access plus 1 year"
+    ExpiresByType image/png "access plus 1 year"
+    ExpiresByType image/svg+xml "access plus 1 year"
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+</IfModule>

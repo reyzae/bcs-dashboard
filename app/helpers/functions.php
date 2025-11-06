@@ -77,6 +77,7 @@ function getMenuByRole() {
         'admin' => [
             ['icon' => 'fa-home', 'label' => 'Dashboard', 'url' => 'index.php'],
             ['icon' => 'fa-cash-register', 'label' => 'Point of Sale', 'url' => 'pos.php'],
+            ['icon' => 'fa-receipt', 'label' => 'Orders', 'url' => 'orders.php'],
             ['icon' => 'fa-box', 'label' => 'Products', 'url' => 'products.php'],
             ['icon' => 'fa-users', 'label' => 'Customers', 'url' => 'customers.php'],
             ['icon' => 'fa-receipt', 'label' => 'Transactions', 'url' => 'transactions.php'],
@@ -87,6 +88,7 @@ function getMenuByRole() {
         'manager' => [
             ['icon' => 'fa-home', 'label' => 'Dashboard', 'url' => 'index.php'],
             ['icon' => 'fa-cash-register', 'label' => 'Point of Sale', 'url' => 'pos.php'],
+            ['icon' => 'fa-receipt', 'label' => 'Orders', 'url' => 'orders.php'],
             ['icon' => 'fa-box', 'label' => 'Products', 'url' => 'products.php'],
             ['icon' => 'fa-users', 'label' => 'Customers', 'url' => 'customers.php'],
             ['icon' => 'fa-receipt', 'label' => 'Transactions', 'url' => 'transactions.php'],
@@ -343,7 +345,38 @@ function getFlashMessage() {
  * Check if user is logged in
  */
 function isLoggedIn() {
-    return isset($_SESSION['user_id']) && !empty($_SESSION['user_id']);
+    // Basic check
+    if (!isset($_SESSION['user_id']) || empty($_SESSION['user_id'])) {
+        return false;
+    }
+
+    // Session timeout enforcement
+    $defaultTimeoutMinutes = 30;
+    $timeoutMinutes = isset($_ENV['SESSION_TIMEOUT']) && is_numeric($_ENV['SESSION_TIMEOUT'])
+        ? intval($_ENV['SESSION_TIMEOUT'])
+        : $defaultTimeoutMinutes;
+
+    // If settings previously loaded into session, prefer that
+    if (isset($_SESSION['session_timeout']) && is_numeric($_SESSION['session_timeout'])) {
+        $timeoutMinutes = max(1, intval($_SESSION['session_timeout']));
+    }
+
+    $now = time();
+    $lastActivity = $_SESSION['last_activity'] ?? $now;
+
+    if (($now - $lastActivity) > ($timeoutMinutes * 60)) {
+        // Session expired
+        $_SESSION = [];
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            session_unset();
+            session_destroy();
+        }
+        return false;
+    }
+
+    // Update last activity timestamp for active session
+    $_SESSION['last_activity'] = $now;
+    return true;
 }
 
 /**

@@ -11,6 +11,8 @@ abstract class BaseModel {
     protected $fillable = [];
     protected $hidden = [];
     protected $timestamps = true;
+    // Cache table columns to avoid repeated DESCRIBE calls
+    private $tableColumns = null;
     
     public function __construct($pdo) {
         $this->pdo = $pdo;
@@ -87,8 +89,14 @@ abstract class BaseModel {
         error_log('📤 Data AFTER filterFillable: ' . json_encode($data));
         
         if ($this->timestamps) {
-            $data['created_at'] = date('Y-m-d H:i:s');
-            $data['updated_at'] = date('Y-m-d H:i:s');
+            // Only include timestamps if columns exist in the table
+            $now = date('Y-m-d H:i:s');
+            if ($this->hasColumn('created_at')) {
+                $data['created_at'] = $now;
+            }
+            if ($this->hasColumn('updated_at')) {
+                $data['updated_at'] = $now;
+            }
         }
         
         $fields = array_keys($data);
@@ -134,7 +142,10 @@ abstract class BaseModel {
         error_log('📤 Data AFTER filterFillable: ' . json_encode($data));
         
         if ($this->timestamps) {
-            $data['updated_at'] = date('Y-m-d H:i:s');
+            // Only include updated_at if column exists
+            if ($this->hasColumn('updated_at')) {
+                $data['updated_at'] = date('Y-m-d H:i:s');
+            }
         }
         
         $fields = array_keys($data);
@@ -207,5 +218,22 @@ abstract class BaseModel {
         }
         
         return array_diff_key($data, array_flip($this->hidden));
+    }
+
+    /**
+     * Check if a column exists in the current model's table.
+     */
+    protected function hasColumn($column) {
+        try {
+            if ($this->tableColumns === null) {
+                $stmt = $this->pdo->query("SHOW COLUMNS FROM {$this->table}");
+                $this->tableColumns = array_map(function($row) { return $row['Field']; }, $stmt->fetchAll());
+            }
+            return in_array($column, $this->tableColumns);
+        } catch (PDOException $e) {
+            // If we cannot determine columns, fail safe: do not add timestamps
+            error_log("⚠️ Failed to get columns for {$this->table}: " . $e->getMessage());
+            return false;
+        }
     }
 }

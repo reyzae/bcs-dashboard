@@ -2,18 +2,14 @@
 // Load bootstrap configuration
 require_once __DIR__ . '/bootstrap.php';
 
-// Handle login form submission
+// Handle legacy login form submission (kept for compatibility; prefer using API router)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'login') {
-    // Include database and auth controller
     require_once __DIR__ . '/../app/config/database.php';
     require_once __DIR__ . '/../app/controllers/AuthController.php';
     
-    $authController = new AuthController();
-    $result = $authController->login($_POST['username'], $_POST['password']);
-    
-    header('Content-Type: application/json');
-    echo json_encode($result);
-    exit();
+    // Use correct constructor and controller method that reads request body
+    $authController = new AuthController($pdo);
+    $authController->login();
 }
 
 // Redirect if already logged in
@@ -250,6 +246,8 @@ if (isset($_SESSION['user_id'])) {
             </div>
             
             <form id="loginForm" class="login-form" autocomplete="on">
+                <!-- CSRF Token -->
+                <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token'] ?? SecurityMiddleware::generateCsrfToken(); ?>">
                 <div class="form-group">
                     <label for="username" class="form-label">
                         <i class="fas fa-user"></i>
@@ -345,7 +343,24 @@ if (isset($_SESSION['user_id'])) {
                     body: formData
                 });
                 
-                const result = await response.json();
+                // Prefer JSON; fallback to text if content-type is not JSON
+                const contentType = response.headers.get('content-type') || '';
+                let result;
+                if (contentType.includes('application/json')) {
+                    result = await response.json();
+                } else {
+                    const text = await response.text();
+                    console.error('Login response (non-JSON):', text.slice(0, 300));
+                    // Attempt to extract JSON inside text if possible
+                    try {
+                        result = JSON.parse(text);
+                    } catch (_) {
+                        // Build a friendly error when server returned HTML or plaintext
+                        showToast('Server Error', 'Response bukan JSON. Detail: ' + (text.slice(0, 120) || 'unknown'), 'error');
+                        shakeLoginCard();
+                        return;
+                    }
+                }
                 
                 if (result.success) {
                     showToast('Login Successful!', 'Redirecting to dashboard...', 'success');
@@ -353,11 +368,13 @@ if (isset($_SESSION['user_id'])) {
                         window.location.href = 'dashboard/';
                     }, 1500);
                 } else {
-                    showToast('Login Failed', result.error || 'Invalid username or password', 'error');
+                    showToast('Login Failed', result.error || result.message || 'Invalid username or password', 'error');
                     shakeLoginCard();
                 }
             } catch (error) {
-                showToast('Connection Error', 'Network error. Please check your connection.', 'error');
+                // Network or fetch error
+                console.error('Login error:', error);
+                showToast('Connection Error', 'Network error. Please check your connection and try again.', 'error');
                 shakeLoginCard();
             } finally {
                 // Reset button state

@@ -232,12 +232,14 @@ Role: admin
 
 ## 🛠️ **Technology Stack**
 
-- **Backend:** PHP 7.4+
+- **Backend:** PHP 8.0+
 - **Database:** MySQL 5.7+
 - **Frontend:** Vanilla JavaScript (ES6+)
-- **CSS:** Custom CSS with CSS Variables
+- **CSS:** Custom CSS dengan CSS Variables
 - **Charts:** Chart.js
 - **Icons:** Font Awesome 6
+
+> Catatan: Untuk produksi, jalankan di HTTPS dan aktifkan HSTS (lihat `public/.htaccess`).
 
 ---
 

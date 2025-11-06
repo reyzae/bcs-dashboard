@@ -9,25 +9,54 @@ require_once __DIR__ . '/bootstrap.php';
 require_once __DIR__ . '/../app/config/database.php';
 require_once __DIR__ . '/../app/helpers/SecurityMiddleware.php';
 
+// Clean any previous output to avoid HTML breaking JSON
+while (ob_get_level() > 0) { ob_end_clean(); }
+ob_start();
+
+// Ensure API responses are JSON-only (avoid HTML errors breaking JSON)
+// Force disabling HTML error output even if APP_DEBUG is true
+ini_set('display_errors', '0');
+ini_set('html_errors', '0');
+
 // Set JSON response header
 header('Content-Type: application/json');
 
-// Enable CORS for development
-header('Access-Control-Allow-Origin: *');
+// CORS Configuration - Production Ready
+$isProduction = ($_ENV['APP_ENV'] ?? 'development') === 'production';
+if ($isProduction) {
+    // Production: Restrict CORS to your domain only
+    $allowedOrigin = $_ENV['APP_URL'] ?? '';
+    $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+    if ($origin && parse_url($origin, PHP_URL_HOST) === parse_url($allowedOrigin, PHP_URL_HOST)) {
+        header('Access-Control-Allow-Origin: ' . $origin);
+    }
+    // Fallback: allow same-origin requests
+    SecurityMiddleware::validateOrigin();
+} else {
+    // Development: Allow all origins (for localhost testing)
+    header('Access-Control-Allow-Origin: *');
+}
+
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, X-CSRF-Token');
+header('Access-Control-Allow-Credentials: true');
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit(0);
 }
 
 // Apply security middleware
-// RELAXED rate limit for development (500 requests per minute)
-// Change to 60 for production
-SecurityMiddleware::rateLimit(500, 60);
+// Production: 60 requests/minute, Development: 500 requests/minute
+$rateLimit = $isProduction ? 60 : 500;
+SecurityMiddleware::rateLimit($rateLimit, 60);
 
-// DISABLED for development - causing 403 errors with localhost:3000
-// SecurityMiddleware::validateOrigin();
+// Enforce CSRF for mutating requests in production
+if ($isProduction) {
+    $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+    if (in_array($method, ['POST', 'PUT', 'PATCH', 'DELETE'])) {
+        SecurityMiddleware::checkCsrfToken();
+    }
+}
 
 // Clean up old rate limit cache files periodically (1 hour)
 if (rand(1, 100) === 1) {
@@ -40,10 +69,19 @@ try {
     $pdo = $database->getConnection();
 } catch (Exception $e) {
     http_response_code(500);
+    $isDebug = ($_ENV['APP_DEBUG'] ?? 'false') === 'true';
     echo json_encode([
         'success' => false, 
         'error' => 'Database connection failed',
-        'message' => ($_ENV['APP_DEBUG'] ?? 'false') === 'true' ? $e->getMessage() : 'Internal server error'
+        'message' => $isDebug ? $e->getMessage() : 'Database connection failed. Please contact administrator.',
+        'debug_info' => $isDebug ? [
+            'error' => $e->getMessage(),
+            'config' => [
+                'host' => $_ENV['DB_HOST'] ?? 'localhost',
+                'dbname' => $_ENV['DB_NAME'] ?? 'bytebalok_dashboard',
+                'user' => $_ENV['DB_USER'] ?? 'root'
+            ]
+        ] : null
     ]);
     exit;
 }
@@ -85,9 +123,48 @@ if (!file_exists($controllerFile)) {
 // Set action in GET for controller to process
 $_GET['action'] = $action;
 
+// Check if action is provided
+if (empty($action)) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'error' => 'Action parameter is required']);
+    exit;
+}
+
 // Include the controller file with error handling
 try {
     require_once $controllerFile;
+    
+    // Determine controller class name from file path
+    $controllerClassName = ucfirst($controller) . 'Controller';
+    
+    // Check if class exists
+    if (!class_exists($controllerClassName)) {
+        http_response_code(500);
+        echo json_encode([
+            'success' => false,
+            'error' => 'Controller class not found',
+            'message' => "Class '{$controllerClassName}' does not exist in {$controllerFile}"
+        ]);
+        exit;
+    }
+    
+    // Instantiate controller with database connection
+    $controllerInstance = new $controllerClassName($pdo);
+    
+    // Check if action method exists
+    if (!method_exists($controllerInstance, $action)) {
+        http_response_code(404);
+        echo json_encode([
+            'success' => false,
+            'error' => 'Action not found',
+            'message' => "Method '{$action}' does not exist in {$controllerClassName}"
+        ]);
+        exit;
+    }
+    
+    // Call the action method
+    $controllerInstance->$action();
+    
 } catch (Exception $e) {
     http_response_code(500);
     echo json_encode([

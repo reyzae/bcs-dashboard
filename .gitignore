@@ -1,8 +1,55 @@
 # Bytebalok Dashboard - Git Ignore File
 
 # Dependencies
+vendor/
+node_modules/
+
+# Environment & secrets
+config.env
+.env
+.env.*
+
+# Storage runtime data (keep directory structure via .gitkeep)
+storage/**
+!storage/**/.gitkeep
+
+# Public runtime uploads & storage (keep .htaccess protection)
+public/uploads/
+public/storage/**
+!public/storage/.htaccess
+
+# IDE/editor & OS files
+.vscode/
+.idea/
+*.code-workspace
+.DS_Store
+Thumbs.db
+
+# Tests and coverage
+tests/
+phpunit.xml*
+.phpunit.result.cache
+
+# Build & temporary artifacts
+dist/
+build/
+*.zip
+*.bak
+*.tmp
+*.swp
+
+# Database dumps
+database.sql
+*.sql
+*.sql.gz
+
+# Local tools and scripts
+tools/
+
+# Dependencies
 /vendor/
 node_modules/
+tools/
 
 # Environment & Configuration
 config.env

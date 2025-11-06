@@ -601,7 +601,7 @@ async function loadReportData(period = 'month', customRange = null) {
         console.log('📊 Loading report data for period:', period, customRange);
         
         // Build API URL dengan parameter periode
-        let statsUrl = '../api_dashboard.php?action=dashboard&method=stats';
+        let statsUrl = '../api.php?controller=dashboard&action=stats';
         
         if (customRange && customRange.from && customRange.to) {
             // Custom date range
@@ -924,7 +924,7 @@ async function loadCategoryChart(period = null, customRange = null) {
         
         // Note: categoryPerformance API doesn't support period filter yet
         // It shows all categories. Can be enhanced later if needed.
-        const url = '../api_dashboard.php?action=dashboard&method=categoryPerformance';
+        const url = '/api.php?controller=dashboard&action=categoryStock';
         console.log('🔗 Fetching category from:', url);
         
         const response = await fetch(url);
@@ -951,7 +951,7 @@ async function loadCategoryChart(period = null, customRange = null) {
                 data: {
                     labels: data.data.categories.map(c => c.name),
                     datasets: [{
-                        data: data.data.categories.map(c => c.total_revenue || 0),
+                        data: data.data.categories.map(c => c.stock_value || 0),
                         backgroundColor: [
                             '#667eea', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'
                         ]
@@ -990,7 +990,7 @@ async function loadTopProducts() {
         }
         
         // Fetch real top-selling products
-        const url = '../api_dashboard.php?action=dashboard&method=topProducts&limit=10';
+        const url = '../api.php?controller=dashboard&action=topProducts&limit=10';
         console.log('🔗 Fetching products from:', url);
         
         const response = await fetch(url);
@@ -1066,7 +1066,7 @@ async function loadInventoryReport() {
     try {
         console.log('📦 Loading inventory report...');
         
-        const response = await fetch('../api_dashboard.php?action=dashboard&method=stockStats');
+        const response = await fetch('/api.php?controller=dashboard&action=stockStats');
         const data = await response.json();
         
         if (data.success && data.data) {
@@ -1090,7 +1090,7 @@ async function loadLowStockProductsTable() {
         console.log('📦 Loading low stock products table...');
         
         // Use correct endpoint for low stock products
-        const response = await fetch('../api_dashboard.php?action=products&method=lowStock&limit=100');
+        const response = await fetch('/api.php?controller=product&action=getLowStock&limit=100');
         console.log('📥 Low stock response status:', response.status);
         
         if (!response.ok) {
@@ -1173,7 +1173,7 @@ async function loadCustomerReport() {
         console.log('👥 Loading customer report...');
         
         // Load customer stats
-        let statsUrl = '../api_dashboard.php?action=dashboard&method=stats';
+        let statsUrl = '../api.php?controller=dashboard&action=stats';
         if (currentPeriod && currentPeriod !== 'custom') {
             statsUrl += `&period=${currentPeriod}`;
         } else if (customDateRange && customDateRange.from && customDateRange.to) {
@@ -1288,11 +1288,11 @@ async function loadProductPerformanceReport() {
         console.log('🏆 Loading product performance report...');
         
         // Load product stats
-        const statsResponse = await fetch('../api_dashboard.php?action=dashboard&method=stats');
+        const statsResponse = await fetch('../api.php?controller=dashboard&action=stats');
         const statsData = await statsResponse.json();
         
         // Load top products
-        const productsResponse = await fetch('../api_dashboard.php?action=dashboard&method=topProducts&limit=10');
+        const productsResponse = await fetch('../api.php?controller=dashboard&action=topProducts&limit=10');
         const productsData = await productsResponse.json();
         
         if (productsData.success && productsData.data && productsData.data.products) {
@@ -1615,13 +1615,13 @@ function exportReport(format) {
         
         const backendType = reportTypeMap[reportType] || 'sales';
         
-        // Build export URL
+        // Build export URL using legacy dashboard export (supports type + date range)
         // Note: Inventory report doesn't need date range
         let url = `../api_dashboard.php?action=export&type=${backendType}&format=${format}`;
         if (backendType !== 'inventory') {
             // Only add date range for reports that support it
-            if (dateFrom) url += `&from=${encodeURIComponent(dateFrom)}`;
-            if (dateTo) url += `&to=${encodeURIComponent(dateTo)}`;
+            if (dateFrom) url += `&date_from=${encodeURIComponent(dateFrom)}`;
+            if (dateTo) url += `&date_to=${encodeURIComponent(dateTo)}`;
         }
         
         console.log('📥 Exporting report:', {

@@ -357,7 +357,7 @@ async function loadStaffDashboard() {
         console.log('🔄 Loading realtime stock data...');
         
         // Load stock stats (REALTIME)
-        const statsResponse = await fetch('../api_dashboard.php?action=dashboard&method=stockStats');
+        const statsResponse = await fetch('/api.php?controller=dashboard&action=stockStats');
         const statsData = await statsResponse.json();
         
         if (statsData.success) {
@@ -442,7 +442,7 @@ function showError(message) {
 
 async function loadLowStockProducts() {
     try {
-        const response = await fetch('../api_dashboard.php?action=products&method=lowStock&limit=20');
+        const response = await fetch('/api.php?controller=product&action=getLowStock&limit=20');
         const data = await response.json();
         
         if (data.success && data.data && data.data.length > 0) {
@@ -533,7 +533,7 @@ async function loadLowStockProducts() {
 
 async function loadCategoryStockOverview() {
     try {
-        const response = await fetch('../api_dashboard.php?action=dashboard&method=categoryStock');
+        const response = await fetch('/api.php?controller=dashboard&action=categoryStock');
         const data = await response.json();
         
         if (data.success && data.data && data.data.categories && data.data.categories.length > 0) {
