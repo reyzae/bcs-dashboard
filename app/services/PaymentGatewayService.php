@@ -264,23 +264,42 @@ class PaymentGatewayService {
      */
     public function createBankTransfer($orderId, $amount, $bank = 'bca') {
         $bankInfo = $this->config['bank_accounts'][strtolower($bank)] ?? $this->config['bank_accounts']['bca'];
-        
-        // Generate virtual account number for automatic verification
-        // Or use manual account number with reference number
-        $virtualAccount = $this->generateVirtualAccount($orderId, $bank);
-        
+
+        // Toggle Virtual Account usage (default true unless explicitly disabled)
+        $useVA = $this->config['use_virtual_account'] ?? true;
+
+        if ($useVA) {
+            // Generate virtual account number for automatic verification
+            $virtualAccount = $this->generateVirtualAccount($orderId, $bank);
+            return [
+                'success' => true,
+                'transaction_id' => $orderId . '-VA-' . time(),
+                'bank_name' => $bankInfo['bank_name'],
+                'account_name' => $bankInfo['name'],
+                'account_number' => $virtualAccount['account_number'],
+                'virtual_account' => $virtualAccount['va_number'],
+                'reference_number' => $virtualAccount['reference'],
+                'transfer_amount' => $amount,
+                'instructions' => "Transfer ke rekening {$bankInfo['bank_name']} a/n {$bankInfo['name']}",
+                'expired_at' => date('Y-m-d H:i:s', strtotime('+24 hours')),
+                'gateway_response' => ['mode' => 'manual', 'bank' => $bank, 'use_virtual_account' => true]
+            ];
+        }
+
+        // Manual bank transfer (no virtual account)
+        $reference = 'PAY-' . $orderId . '-' . time();
         return [
             'success' => true,
-            'transaction_id' => $orderId . '-VA-' . time(),
+            'transaction_id' => $orderId . '-TRF-' . time(),
             'bank_name' => $bankInfo['bank_name'],
             'account_name' => $bankInfo['name'],
-            'account_number' => $virtualAccount['account_number'],
-            'virtual_account' => $virtualAccount['va_number'],
-            'reference_number' => $virtualAccount['reference'],
+            'account_number' => $bankInfo['account'],
+            'virtual_account' => null,
+            'reference_number' => $reference,
             'transfer_amount' => $amount,
-            'instructions' => "Transfer ke rekening {$bankInfo['bank_name']} a/n {$bankInfo['name']}",
+            'instructions' => "Transfer ke rekening {$bankInfo['bank_name']} a/n {$bankInfo['name']} No: {$bankInfo['account']}",
             'expired_at' => date('Y-m-d H:i:s', strtotime('+24 hours')),
-            'gateway_response' => ['mode' => 'manual', 'bank' => $bank]
+            'gateway_response' => ['mode' => 'manual', 'bank' => $bank, 'use_virtual_account' => false]
         ];
     }
     

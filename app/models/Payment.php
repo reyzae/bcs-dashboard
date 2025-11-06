@@ -125,6 +125,13 @@ class Payment extends BaseModel {
                 if (!$bank || strtolower($bank) === 'default') {
                     $bank = $map['bank_default'] ?? 'bca';
                 }
+
+                // Read toggle to use virtual account (default disabled unless explicitly enabled)
+                $useVASetting = isset($map['transfer_use_va']) ? strtolower(trim((string)$map['transfer_use_va'])) : null;
+                $useVA = false; // default: disabled per user request
+                if ($useVASetting !== null) {
+                    $useVA = in_array($useVASetting, ['1','true','yes'], true);
+                }
             }
         } catch (Exception $e) {
             // Fallback silently
@@ -138,7 +145,13 @@ class Payment extends BaseModel {
             $bankAccounts['bca']['account'] = $_ENV['BANK_BCA_ACCOUNT'] ?? getenv('BANK_BCA_ACCOUNT') ?? '1481899929';
         }
 
-        $configOverride = [ 'bank_accounts' => $bankAccounts ];
+        // Env override for VA if desired
+        $envUseVA = $_ENV['TRANSFER_USE_VA'] ?? getenv('TRANSFER_USE_VA');
+        if ($envUseVA !== null) {
+            $useVA = in_array(strtolower((string)$envUseVA), ['1','true','yes'], true);
+        }
+
+        $configOverride = [ 'bank_accounts' => $bankAccounts, 'use_virtual_account' => $useVA ];
         $gatewayService = new PaymentGatewayService($gateway, $configOverride);
         
         $result = $gatewayService->createBankTransfer($orderId, $amount, $bank);
