@@ -34,11 +34,47 @@ class Payment extends BaseModel {
     public function generateQRIS($orderId, $amount, $customerData = []) {
         require_once __DIR__ . '/../services/PaymentGatewayService.php';
         
+        // 1) Check if static QRIS is enabled via settings/env
+        $staticEnabledEnv = strtolower((string)($_ENV['QRIS_STATIC_ENABLED'] ?? getenv('QRIS_STATIC_ENABLED') ?? ''));
+        $staticEnabled = in_array($staticEnabledEnv, ['1','true','yes'], true);
+        $staticImageUrl = $_ENV['QRIS_STATIC_IMAGE_URL'] ?? getenv('QRIS_STATIC_IMAGE_URL') ?? null;
+
+        try {
+            $result = $this->pdo->query("SHOW TABLES LIKE 'settings'");
+            if ($result && $result->rowCount() > 0) {
+                $sql = "SELECT `key`, `value` FROM settings WHERE `key` IN ('qris_static_enabled','qris_static_image_url')";
+                $stmt = $this->pdo->query($sql);
+                $settings = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                $map = [];
+                foreach ($settings as $s) { $map[$s['key']] = $s['value']; }
+                if (isset($map['qris_static_enabled'])) {
+                    $val = strtolower(trim((string)$map['qris_static_enabled']));
+                    $staticEnabled = in_array($val, ['1','true','yes'], true);
+                }
+                if (isset($map['qris_static_image_url']) && $map['qris_static_image_url']) {
+                    $staticImageUrl = $map['qris_static_image_url'];
+                }
+            }
+        } catch (Exception $e) {
+            // Ignore and proceed
+        }
+
+        if ($staticEnabled && $staticImageUrl) {
+            // Serve static QR image without hitting gateway
+            return [
+                'qr_string' => null,
+                'qr_code_url' => $staticImageUrl,
+                'payment_url' => null,
+                'transaction_id' => null,
+                'expired_at' => date('Y-m-d H:i:s', strtotime('+24 hours')),
+                'gateway_response' => ['mode' => 'static', 'source' => 'settings']
+            ];
+        }
+
+        // 2) Fallback to gateway-generated QRIS
         $gateway = $_ENV['PAYMENT_GATEWAY'] ?? 'midtrans';
         $gatewayService = new PaymentGatewayService($gateway);
-        
         $result = $gatewayService->createQRIS($orderId, $amount, $customerData);
-        
         return [
             'qr_string' => $result['qr_string'] ?? null,
             'qr_code_url' => $result['qr_code_url'] ?? null,
@@ -92,6 +128,14 @@ class Payment extends BaseModel {
             }
         } catch (Exception $e) {
             // Fallback silently
+        }
+
+        // Ensure sensible defaults if settings/env are absent
+        if ($bankAccounts['bca']['name'] === 'Your Business Name') {
+            $bankAccounts['bca']['name'] = $_ENV['BANK_BCA_NAME'] ?? getenv('BANK_BCA_NAME') ?? 'REYZA WIRAKUSUMA';
+        }
+        if ($bankAccounts['bca']['account'] === '1234567890') {
+            $bankAccounts['bca']['account'] = $_ENV['BANK_BCA_ACCOUNT'] ?? getenv('BANK_BCA_ACCOUNT') ?? '1481899929';
         }
 
         $configOverride = [ 'bank_accounts' => $bankAccounts ];
